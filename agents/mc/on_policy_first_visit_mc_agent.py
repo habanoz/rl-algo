@@ -47,7 +47,7 @@ class OnPolicyFirstVisitMcAgent(BaseAgent):
                 self.returns[(st, at)].append(G)
                 self.Q[st, at] = np.mean(self.returns[(st, at)])
 
-                a_star = self.arg_max(self.Q[st, :])
+                a_star = self.greedy_action_select(self.Q[st, :])
 
                 for a in range(self.n_actions):
                     if a == a_star:

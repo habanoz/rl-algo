@@ -3,8 +3,11 @@ from tqdm import tqdm
 import matplotlib.pyplot as plt
 
 from EpisodeStatsWrapper import EpisodeStatsWrapper
+from agents.mc.off_policy_mc_agent import OffPolicyMcAgent
 from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
 import numpy as np
+
+from agents.td.sarsa_agent import SarsaAgent
 
 
 def train_agent(env, agent, n_episodes=1000):
@@ -34,7 +37,7 @@ if __name__ == '__main__':
                    render_mode=None)  # set render_mode to "Human"
     env = EpisodeStatsWrapper(env, n_runs=runs, n_episodes=n_episodes)
     for run in range(runs):
-        agent = OnPolicyFirstVisitMcAgent(env.observation_space.n, env.action_space.n)
+        agent = SarsaAgent(env.observation_space.n, env.action_space.n)
 
         train_agent(env, agent, n_episodes=n_episodes)
 
