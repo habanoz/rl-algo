@@ -35,12 +35,12 @@ class EpisodeStatsWrapper(gym.Wrapper):
         self.episode_reward_sum += reward
         self.episode_length += 1
 
-        if done:
+        if done or truncated:
             self.episode_index += 1
             run = self.episode_index // self.n_episodes
             episode = self.episode_index % self.n_episodes
 
-            self.rewards[run, episode] = self.episode_reward_sum / self.episode_length
+            self.rewards[run, episode] = self.episode_reward_sum
             self.lengths[run, episode] = self.episode_length
 
         return (
