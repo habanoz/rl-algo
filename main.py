@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from EpisodeStatsWrapper import EpisodeStatsWrapper
 from agents.frozen_lake_plotter import FrozenLakePlotter
+from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
 from agents.td.double_q_learning_agent import DoubleQLearningAgent
 from agents.td.q_learning_agent import QLearningAgent
 
@@ -30,16 +31,16 @@ def generate_episodes(env, agent, n_episodes=1000):
 
 if __name__ == '__main__':
     runs = 5
-    n_episodes = 5_000
-    demo_runs = True
+    n_episodes = 10_000
+    demo_runs = False
 
     env = gym.make('FrozenLake-v1', desc=None, map_name="4x4", is_slippery=True,
                    render_mode=None)  # set render_mode to "Human"
     env = EpisodeStatsWrapper(env, n_runs=runs, n_episodes=n_episodes)
 
     for run in range(runs):
-        agent = DoubleQLearningAgent(env.observation_space.n, env.action_space.n, epsilon=1.0,
-                               epsilon_decay=0.99 / n_episodes)
+        agent = NStepSarsaAgent(env.observation_space.n, env.action_space.n, epsilon=1.0,
+                                epsilon_decay=0.99 / n_episodes, n_step_size=2)
 
         generate_episodes(env, agent, n_episodes=n_episodes)
 
@@ -49,7 +50,7 @@ if __name__ == '__main__':
             agent.epsilon_decay = None
             # generate_episodes(demo_env, agent, n_episodes=10)
 
-            FrozenLakePlotter(agent.Q1, 4, 4, "4x4 Slippery").show()
+            FrozenLakePlotter(agent.Q, 4, 4, "4x4 Slippery").show()
 
     fig, axs = plt.subplots(ncols=1, nrows=2, figsize=(20, 10))
     axs[0].set_title("Episode rewards")
