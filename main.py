@@ -6,6 +6,7 @@ from tqdm import tqdm
 from EpisodeStatsWrapper import EpisodeStatsWrapper
 from agents.frozen_lake_plotter import FrozenLakePlotter
 from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
+from agents.n_step.off_policy_n_step_sarsa_agent import OffPolicyNStepSarsaAgent
 from agents.td.double_q_learning_agent import DoubleQLearningAgent
 from agents.td.q_learning_agent import QLearningAgent
 
@@ -39,8 +40,8 @@ if __name__ == '__main__':
     env = EpisodeStatsWrapper(env, n_runs=runs, n_episodes=n_episodes)
 
     for run in range(runs):
-        agent = NStepSarsaAgent(env.observation_space.n, env.action_space.n, epsilon=1.0,
-                                epsilon_decay=0.99 / n_episodes, n_step_size=2)
+        agent = OffPolicyNStepSarsaAgent(env.observation_space.n, env.action_space.n, epsilon=1.0,
+                                epsilon_decay=0.99 / n_episodes, n_step_size=5)
 
         generate_episodes(env, agent, n_episodes=n_episodes)
 
