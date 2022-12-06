@@ -1,7 +1,6 @@
-from collections import defaultdict
+import numpy as np
 
 from agents.base_agent import BaseAgent
-import numpy as np
 
 
 class SarsaAgent(BaseAgent):
