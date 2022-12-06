@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from EpisodeStatsWrapper import EpisodeStatsWrapper
 from agents.frozen_lake_plotter import FrozenLakePlotter
+from agents.td.double_q_learning_agent import DoubleQLearningAgent
 from agents.td.q_learning_agent import QLearningAgent
 
 
@@ -37,7 +38,7 @@ if __name__ == '__main__':
     env = EpisodeStatsWrapper(env, n_runs=runs, n_episodes=n_episodes)
 
     for run in range(runs):
-        agent = QLearningAgent(env.observation_space.n, env.action_space.n, epsilon=1.0,
+        agent = DoubleQLearningAgent(env.observation_space.n, env.action_space.n, epsilon=1.0,
                                epsilon_decay=0.99 / n_episodes)
 
         generate_episodes(env, agent, n_episodes=n_episodes)
@@ -48,7 +49,7 @@ if __name__ == '__main__':
             agent.epsilon_decay = None
             # generate_episodes(demo_env, agent, n_episodes=10)
 
-            FrozenLakePlotter(agent.Q, 4, 4, "4x4 Slippery").show()
+            FrozenLakePlotter(agent.Q1, 4, 4, "4x4 Slippery").show()
 
     fig, axs = plt.subplots(ncols=1, nrows=2, figsize=(20, 10))
     axs[0].set_title("Episode rewards")
