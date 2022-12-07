@@ -15,7 +15,7 @@ class BaseAgent:
             self.do_after_episode()
 
     def do_after_episode(self):
-        if self.epsilon_decay and self.epsilon_decay > 0:
+        if self.epsilon_decay is not None and self.epsilon_decay > 0:
             self.epsilon = max(self.epsilon - self.epsilon_decay, self.min_epsilon, 0.0)
 
     def greedy_action_select(self, nd_array1):

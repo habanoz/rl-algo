@@ -6,8 +6,8 @@ import numpy as np
 
 
 class OnPolicyFirstVisitMcAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, epsilon=0.1, gamma=0.9):
-        super().__init__()
+    def __init__(self, n_states, n_actions, epsilon=0.1, epsilon_decay=None, min_epsilon=0.01, gamma=0.9):
+        super().__init__(epsilon=epsilon, epsilon_decay=epsilon_decay, min_epsilon=min_epsilon)
         self.n_states = n_states
         self.n_actions = n_actions
         self.epsilon = epsilon
@@ -30,6 +30,8 @@ class OnPolicyFirstVisitMcAgent(BaseAgent):
 
         if terminated:
             self.do_episode_ended()
+
+        super().update(state, action, reward, terminated, next_state)
 
     def do_episode_ended(self):
         self.do_reverse_transition_loop(self.transitions)

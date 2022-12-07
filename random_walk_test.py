@@ -3,7 +3,11 @@ import numpy as np
 from tqdm import tqdm
 
 from EpisodeStatsWrapper import EpisodeStatsWrapper
+from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
 from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
+from agents.n_step.n_step_tree_backup_agent import NStepTreeBackupAgent
+from agents.n_step.off_policy_n_step_sarsa_agent import OffPolicyNStepSarsaAgent
+from agents.td.q_learning_agent import QLearningAgent
 from env.random_walk_env import RandomWalkEnv
 
 
@@ -72,56 +76,86 @@ def execute(agent_factory, env, n_runs=10, n_episodes=10_000, rolling_length=100
 
 
 def start():
-    runs = 5
-    n_episodes = 200
+    runs = 1
+    n_episodes = 20_000
 
     env = RandomWalkEnv()
     n_obs = env.observation_space.n
     n_actions = env.action_space.n
 
-    agent1 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=None, alpha=0.3,
-                                     n_step_size=1)
-    reward_moving_average, length_moving_average, errors_moving_average = execute(agent1, env, n_runs=runs, n_episodes=n_episodes, rolling_length=1)
+    run5(env, n_obs, n_actions, n_episodes, runs)
 
-    agent2 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=None, alpha=0.3,
-                                     n_step_size=2)
-    reward_moving_average2, length_moving_average2, errors_moving_average2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, rolling_length=1)
 
-    agent3 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=None, alpha=0.3,
-                                     n_step_size=3)
-    reward_moving_average3, length_moving_average3, errors_moving_average3 = execute(agent3, env, n_runs=runs, n_episodes=n_episodes, rolling_length=1)
-
-    agent4 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=None, alpha=0.3,
-                                     n_step_size=4)
-    reward_moving_average4, length_moving_average4, errors_moving_average4 = execute(agent4, env, n_runs=runs, n_episodes=n_episodes, rolling_length=1)
-
-    agent5 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=None, alpha=0.3,
-                                     n_step_size=5)
-    reward_moving_average5, length_moving_average5, errors_moving_average5 = execute(agent5, env, n_runs=runs, n_episodes=n_episodes, rolling_length=1)
-
+def run1(env, n_obs, n_actions, n_episodes, runs):
+    agent1 = lambda: OnPolicyFirstVisitMcAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes,
+                                               min_epsilon=0.01)
+    reward_moving_average, length_moving_average, errors_moving_average = execute(agent1, env, n_runs=runs,
+                                                                                  n_episodes=n_episodes,
+                                                                                  rolling_length=1)
     fig, axs = plt.subplots(ncols=1, nrows=3, figsize=(20, 10))
     axs[0].set_title("Episode rewards")
     axs[0].plot(range(len(reward_moving_average)), reward_moving_average, label="n-1")
-    axs[0].plot(range(len(reward_moving_average2)), reward_moving_average2, label="n-2")
-    axs[0].plot(range(len(reward_moving_average3)), reward_moving_average3, label="n-3")
-    axs[0].plot(range(len(reward_moving_average4)), reward_moving_average4, label="n-4")
-    axs[0].plot(range(len(reward_moving_average5)), reward_moving_average5, label="n-5")
     axs[0].legend()
 
     axs[1].set_title("Episode lengths")
     axs[1].plot(range(len(length_moving_average)), length_moving_average, label="n-1")
-    axs[1].plot(range(len(length_moving_average2)), length_moving_average2, label="n-2")
-    axs[1].plot(range(len(length_moving_average3)), length_moving_average3, label="n-3")
-    axs[1].plot(range(len(length_moving_average4)), length_moving_average4, label="n-4")
-    axs[1].plot(range(len(length_moving_average5)), length_moving_average5, label="n-5")
     axs[1].legend()
 
     axs[2].set_title("Episode Errors")
     axs[2].plot(range(len(errors_moving_average)), errors_moving_average, label="n-1")
-    axs[2].plot(range(len(errors_moving_average2)), errors_moving_average2, label="n-2")
-    axs[2].plot(range(len(errors_moving_average3)), errors_moving_average3, label="n-3")
-    axs[2].plot(range(len(errors_moving_average4)), errors_moving_average4, label="n-4")
-    axs[2].plot(range(len(errors_moving_average5)), errors_moving_average5, label="n-5")
+    axs[2].legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
+def run5(env, n_obs, n_actions, n_episodes, runs):
+    agent1 = lambda: OnPolicyFirstVisitMcAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes,
+                                               min_epsilon=0.01)
+    reward_moving_average, length_moving_average, errors_moving_average = execute(agent1, env, n_runs=runs,
+                                                                                  n_episodes=n_episodes,
+                                                                                  rolling_length=1)
+    agent2 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes, alpha=0.3,
+                                     n_step_size=1)
+    reward_moving_average2, length_moving_average2, errors_moving_average2 = execute(agent2, env, n_runs=runs,
+                                                                                     n_episodes=n_episodes,
+                                                                                     rolling_length=1)
+    agent3 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes, alpha=0.1,
+                                     n_step_size=3
+                                     )
+    reward_moving_average3, length_moving_average3, errors_moving_average3 = execute(agent3, env, n_runs=runs,
+                                                                                     n_episodes=n_episodes,
+                                                                                     rolling_length=1)
+    agent4 = lambda: QLearningAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes, alpha=0.1)
+    reward_moving_average4, length_moving_average4, errors_moving_average4 = execute(agent4, env, n_runs=runs,
+                                                                                     n_episodes=n_episodes,
+                                                                                     rolling_length=1)
+    # agent5 = lambda: NStepTreeBackupAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=None, alpha=0.1, n_step_size=1)
+    # reward_moving_average5, length_moving_average5, errors_moving_average5 = execute(agent5, env, n_runs=runs, n_episodes=n_episodes, rolling_length=1)
+
+    fig, axs = plt.subplots(ncols=1, nrows=3, figsize=(20, 10))
+    axs[0].set_title("Episode rewards")
+    axs[0].plot(range(len(reward_moving_average)), reward_moving_average, label="MC")
+    axs[0].plot(range(len(reward_moving_average2)), reward_moving_average2, label="sarsa n-1")
+    axs[0].plot(range(len(reward_moving_average3)), reward_moving_average3, label="sarsa n-3")
+    axs[0].plot(range(len(reward_moving_average4)), reward_moving_average4, label="QL")
+    #axs[0].plot(range(len(reward_moving_average5)), reward_moving_average5, label="TB n-1")
+    axs[0].legend()
+
+    axs[1].set_title("Episode lengths")
+    axs[1].plot(range(len(length_moving_average)), length_moving_average, label="MC")
+    axs[1].plot(range(len(length_moving_average2)), length_moving_average2, label="sarsa n-1")
+    axs[1].plot(range(len(length_moving_average3)), length_moving_average3, label="sarsa n-3")
+    axs[1].plot(range(len(length_moving_average4)), length_moving_average4, label="QL")
+    # axs[1].plot(range(len(length_moving_average5)), length_moving_average5, label="TB n-1")
+    axs[1].legend()
+
+    axs[2].set_title("Episode Errors")
+    axs[2].plot(range(len(errors_moving_average)), errors_moving_average, label="MC")
+    axs[2].plot(range(len(errors_moving_average2)), errors_moving_average2, label="sarsa n-1")
+    axs[2].plot(range(len(errors_moving_average3)), errors_moving_average3, label="sarsa n-3")
+    axs[2].plot(range(len(errors_moving_average4)), errors_moving_average4, label="QL")
+    # axs[2].plot(range(len(errors_moving_average5)), errors_moving_average5, label="TB n-1")
     axs[2].legend()
 
     plt.tight_layout()

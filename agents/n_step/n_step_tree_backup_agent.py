@@ -34,7 +34,8 @@ class NStepTreeBackupAgent(BaseAgent):
         self.observed_rewards = np.empty(self.n_step_size + 1, dtype=int)
 
     def get_action(self, state):
-        if self.next_action:
+random walk environment
+- n step fixes        if self.next_action is not None:
             return self.next_action
 
         a0 = np.random.choice(self.n_actions)
