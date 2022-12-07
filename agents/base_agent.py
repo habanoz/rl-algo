@@ -7,8 +7,6 @@ class BaseAgent:
         self.epsilon_decay = epsilon_decay
         self.min_epsilon = min_epsilon
 
-        pass
-
     def get_action(self, obs):
         pass
 

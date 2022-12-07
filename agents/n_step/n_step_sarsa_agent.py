@@ -33,7 +33,7 @@ class NStepSarsaAgent(BaseAgent):
         self.observed_rewards = np.empty(self.n_step_size + 1, dtype=int)
 
     def get_action(self, state):
-        if self.next_action:
+        if self.next_action is not None:
             return self.next_action
 
         a0 = self.epsilon_greedy_action_select(self.Q[state, :])

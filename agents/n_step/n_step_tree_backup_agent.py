@@ -2,7 +2,7 @@ from agents.base_agent import BaseAgent
 import numpy as np
 
 
-class OffPolicyNStepSarsaAgent(BaseAgent):
+class NStepTreeBackupAgent(BaseAgent):
     def __init__(self, n_states, n_actions, n_step_size=5, epsilon=0.5, epsilon_decay=0.001, min_epsilon=0.01,
                  gamma=0.9, alpha=0.1):
         super().__init__(epsilon=epsilon, epsilon_decay=epsilon_decay, min_epsilon=min_epsilon)
@@ -18,6 +18,7 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
         self.next_action = None
         self.t = None
         self.T = None
+
         self.observed_states = None
         self.selected_actions = None
         self.observed_rewards = None
@@ -33,7 +34,7 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
         self.observed_rewards = np.empty(self.n_step_size + 1, dtype=int)
 
     def get_action(self, state):
-        if self.next_action is not None:
+        if self.next_action:
             return self.next_action
 
         a0 = np.random.choice(self.n_actions)
@@ -60,6 +61,7 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
 
         if done:
             for tau_p in range(tau + 1, self.T):
+                self.t += 1
                 self.update_tau(tau_p)
 
             self.reset_episode_data()
@@ -69,26 +71,31 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
     def update_tau(self, tau):
 
         if tau >= 0:
-            rho = np.prod([
-                self.pi_ai_si(i) / (1 / self.n_actions)
-                for i in range(tau + 1, min(tau + self.n_step_size - 1, self.T - 1) + 1)
-            ])
+            G = 0
+            if self.t + 1 >= self.T:
+                G = self.observed_rewards[self.modded(self.T)]
+            else:
+                G = self.observed_rewards[self.modded(self.t + 1)] + self.gamma * sum(
+                    [
+                        self.pi_a_st(a, self.t + 1) * self.Q[self.observed_states[self.modded(self.t + 1)], a]
+                        for a in range(self.n_actions)
+                    ]
+                )
 
-            G = sum([
-                pow(self.gamma, i - tau - 1) * self.observed_rewards[self.modded(i)]
-                for i in range(tau + 1, min(tau + self.n_step_size, self.T) + 1)
-            ])
+            for k in range(min(self.t, self.T - 1), tau, -1):  # tau + 1 + (-1) for a closed range
+                ak = self.selected_actions[self.modded(k)]
 
-            if tau + self.n_step_size < self.T:
-                G += pow(self.gamma, self.n_step_size) * self.Q[
-                    self.observed_states[self.modded(tau + self.n_step_size)],
-                    self.selected_actions[self.modded(tau + self.n_step_size)]
-                ]
+                G = self.observed_rewards[self.modded(k)] + self.gamma * sum(
+                    [
+                        self.pi_a_st(a, k) * self.Q[self.observed_states[self.modded(k)], a]
+                        for a in range(self.n_actions) if a != ak
+                    ]
+                ) + self.gamma * self.pi_a_st(ak, k) * G
 
             self.Q[
                 self.observed_states[self.modded(tau)],
                 self.selected_actions[self.modded(tau)]
-            ] += self.alpha * rho * (
+            ] += self.alpha * (
                     G -
                     self.Q[
                         self.observed_states[self.modded(tau)],
@@ -99,5 +106,6 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
     def modded(self, idx):
         return idx % (self.n_step_size + 1)
 
-    def pi_ai_si(self, i):
-        return 1 if self.selected_actions[self.modded(i)] == self.greedy_action_select(self.Q[self.observed_states[self.modded(i)], :]) else 0
+    def pi_a_st(self, a, t):
+        return 1 if a == self.greedy_action_select(
+            self.Q[self.observed_states[self.modded(t)], :]) else 0

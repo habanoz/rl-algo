@@ -1,19 +1,14 @@
-import gymnasium as gym
 import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
-import os
 
 from EpisodeStatsWrapper import EpisodeStatsWrapper
-from agents.frozen_lake_plotter import FrozenLakePlotter
 from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
-from agents.n_step.n_step_tree_backup_agent import NStepTreeBackupAgent
-from agents.n_step.off_policy_n_step_sarsa_agent import OffPolicyNStepSarsaAgent
-from agents.td.double_q_learning_agent import DoubleQLearningAgent
-from agents.td.q_learning_agent import QLearningAgent
+from env.random_walk_env import RandomWalkEnv
 
 
 def generate_episodes(env, agent, n_episodes=1000):
+    episode_errors = np.empty(n_episodes)
     for episode in tqdm(range(n_episodes)):
 
         obs, info = env.reset()
@@ -32,13 +27,22 @@ def generate_episodes(env, agent, n_episodes=1000):
 
             obs = next_obs
 
+        values = np.array([np.mean(r) for r in agent.Q])
+        episode_errors[episode] = np.sqrt(np.sum(np.power(values - env.true_values, 2)) / len(env.true_values))
+
+    return episode_errors
+
 
 def execute(agent_factory, env, n_runs=10, n_episodes=10_000, rolling_length=100):
     w_env = EpisodeStatsWrapper(env, n_runs=n_runs, n_episodes=n_episodes)
+    errors = np.empty((n_runs, n_episodes))
+
     for run in range(n_runs):
         agent = agent_factory()
 
-        generate_episodes(w_env, agent, n_episodes=n_episodes)
+        episode_errors = generate_episodes(w_env, agent, n_episodes=n_episodes)
+
+        errors[run, :] = episode_errors
 
     rewards_means = np.mean(w_env.rewards, axis=0)
     reward_moving_average = (
@@ -56,39 +60,46 @@ def execute(agent_factory, env, n_runs=10, n_episodes=10_000, rolling_length=100
             / rolling_length
     )
 
-    return reward_moving_average, length_moving_average
+    error_means = np.mean(errors, axis=0)
+    errors_moving_average = (
+            np.convolve(
+                error_means, np.ones(rolling_length), mode="valid"
+            )
+            / rolling_length
+    )
+
+    return reward_moving_average, length_moving_average, errors_moving_average
 
 
-if __name__ == '__main__':
-    runs = 10
-    n_episodes = 10_000
+def start():
+    runs = 5
+    n_episodes = 200
 
-    # set render_mode to "Human" to
-    env = gym.make('FrozenLake-v1', desc=None, map_name="8x8", is_slippery=False, render_mode=None)
+    env = RandomWalkEnv()
     n_obs = env.observation_space.n
     n_actions = env.action_space.n
 
-    agent1 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes, alpha=0.3,
+    agent1 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=None, alpha=0.3,
                                      n_step_size=1)
-    reward_moving_average, length_moving_average = execute(agent1, env, n_runs=runs, n_episodes=n_episodes)
+    reward_moving_average, length_moving_average, errors_moving_average = execute(agent1, env, n_runs=runs, n_episodes=n_episodes, rolling_length=1)
 
-    agent2 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes, alpha=0.3,
+    agent2 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=None, alpha=0.3,
                                      n_step_size=2)
-    reward_moving_average2, length_moving_average2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes)
+    reward_moving_average2, length_moving_average2, errors_moving_average2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, rolling_length=1)
 
-    agent3 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes, alpha=0.3,
+    agent3 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=None, alpha=0.3,
                                      n_step_size=3)
-    reward_moving_average3, length_moving_average3 = execute(agent3, env, n_runs=runs, n_episodes=n_episodes)
+    reward_moving_average3, length_moving_average3, errors_moving_average3 = execute(agent3, env, n_runs=runs, n_episodes=n_episodes, rolling_length=1)
 
-    agent4 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes, alpha=0.3,
+    agent4 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=None, alpha=0.3,
                                      n_step_size=4)
-    reward_moving_average4, length_moving_average4 = execute(agent4, env, n_runs=runs, n_episodes=n_episodes)
+    reward_moving_average4, length_moving_average4, errors_moving_average4 = execute(agent4, env, n_runs=runs, n_episodes=n_episodes, rolling_length=1)
 
-    agent5 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes, alpha=0.3,
+    agent5 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=None, alpha=0.3,
                                      n_step_size=5)
-    reward_moving_average5, length_moving_average5 = execute(agent5, env, n_runs=runs, n_episodes=n_episodes)
+    reward_moving_average5, length_moving_average5, errors_moving_average5 = execute(agent5, env, n_runs=runs, n_episodes=n_episodes, rolling_length=1)
 
-    fig, axs = plt.subplots(ncols=1, nrows=2, figsize=(20, 10))
+    fig, axs = plt.subplots(ncols=1, nrows=3, figsize=(20, 10))
     axs[0].set_title("Episode rewards")
     axs[0].plot(range(len(reward_moving_average)), reward_moving_average, label="n-1")
     axs[0].plot(range(len(reward_moving_average2)), reward_moving_average2, label="n-2")
@@ -105,7 +116,17 @@ if __name__ == '__main__':
     axs[1].plot(range(len(length_moving_average5)), length_moving_average5, label="n-5")
     axs[1].legend()
 
-    os.system('spd-say "your program has finished"')
+    axs[2].set_title("Episode Errors")
+    axs[2].plot(range(len(errors_moving_average)), errors_moving_average, label="n-1")
+    axs[2].plot(range(len(errors_moving_average2)), errors_moving_average2, label="n-2")
+    axs[2].plot(range(len(errors_moving_average3)), errors_moving_average3, label="n-3")
+    axs[2].plot(range(len(errors_moving_average4)), errors_moving_average4, label="n-4")
+    axs[2].plot(range(len(errors_moving_average5)), errors_moving_average5, label="n-5")
+    axs[2].legend()
 
     plt.tight_layout()
     plt.show()
+
+
+if __name__ == '__main__':
+    start()
