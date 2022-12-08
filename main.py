@@ -10,6 +10,7 @@ from EpisodeStatsWrapper import EpisodeStatsWrapper
 from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
 from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
 from agents.n_step.off_policy_n_step_q_sigma_agent import OffPolicyNStepQSigmaAgent
+from agents.planning.tabular_dyna_q_agent import TabularDynaQAgent
 from agents.td.sarsa_agent import SarsaAgent
 from episodes_stats import EpisodesStats
 from rms_errors_for_baseline import RMSErrorsForBaseline
@@ -128,8 +129,7 @@ def train_4(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseli
     stats1 = execute(agent1, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
     # agent 2
-    agent2 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes, alpha=0.05,
-                                     n_step_size=1)
+    agent2 = lambda: TabularDynaQAgent(n_obs, n_actions, alpha=0.05)
     stats2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
     # agent 3
