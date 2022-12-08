@@ -9,6 +9,7 @@ from tqdm import tqdm
 from EpisodeStatsWrapper import EpisodeStatsWrapper
 from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
 from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
+from agents.n_step.off_policy_n_step_q_sigma_agent import OffPolicyNStepQSigmaAgent
 from agents.td.sarsa_agent import SarsaAgent
 from episodes_stats import EpisodesStats
 from rms_errors_for_baseline import RMSErrorsForBaseline
@@ -118,7 +119,7 @@ def execute(agent_factory, env, n_runs=10, n_episodes=10_000, value_baseline=Non
 def train_4(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseline: ndarray = None):
     label1 = "sarsa"
     label2 = "sarsa n-1"
-    label3 = "sarsa n-2"
+    label3 = "q-sigma n-2"
     label4 = "MC"
 
     # agent 1
@@ -132,7 +133,7 @@ def train_4(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseli
     stats2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
     # agent 3
-    agent3 = lambda: NStepSarsaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes, alpha=0.05,
+    agent3 = lambda: OffPolicyNStepQSigmaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes, alpha=0.05,
                                      n_step_size=2)
     stats3 = execute(agent3, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
@@ -178,8 +179,8 @@ def train_4(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseli
 
 
 if __name__ == '__main__':
-    runs = 5
-    n_episodes = 20_000
+    runs = 1
+    n_episodes = 10_000
 
     # set render_mode to "Human" to
     env = gym.make('FrozenLake-v1', desc=None, map_name="4x4", is_slippery=False, render_mode=None)
