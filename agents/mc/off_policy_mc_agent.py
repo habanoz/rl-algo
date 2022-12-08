@@ -1,22 +1,22 @@
 from agents.base_agent import BaseAgent
 import numpy as np
 
+from model.agent_config import AgentConfig
 from transition import Transition
 
 
 class OffPolicyMcAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, epsilon=0.1, gamma=0.9):
-        super().__init__()
+    def __init__(self, n_states, n_actions, config: AgentConfig):
+        super().__init__(config)
         self.n_states = n_states
         self.n_actions = n_actions
-        self.epsilon = epsilon
-        self.gama = gamma
+
         self.transitions = []
 
         self.Q = np.zeros((n_states, n_actions))
         self.C = np.zeros((n_states, n_actions))
 
-        self.b = np.full((n_states, n_actions), max(self.epsilon / n_actions, 1 / n_actions))  # epsilon soft-policy
+        self.b = np.full((n_states, n_actions), max(self.c.epsilon / n_actions, 1 / n_actions))  # epsilon soft-policy
         self.pi = np.full(n_states, 0)
 
     def get_action(self, state):
@@ -38,7 +38,7 @@ class OffPolicyMcAgent(BaseAgent):
         for t in reversed(transitions):
             (st, at, rt, ns, first_visit) = t.to_tuple()
 
-            G = self.gama * G + rt
+            G = self.c.gamma * G + rt
 
             # record training error
             self.add_training_error(G, self.Q[st, at])
@@ -52,3 +52,6 @@ class OffPolicyMcAgent(BaseAgent):
                 break
 
             W *= 1 / self.b[st, at]
+
+    def state_values(self):
+        return np.array([np.mean(r) for r in self.Q])

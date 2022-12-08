@@ -1,17 +1,15 @@
 from agents.base_agent import BaseAgent
 import numpy as np
 
+from model.agent_config import AgentConfig
+
 
 class OffPolicyNStepSarsaAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, n_step_size=5, epsilon=0.5, epsilon_decay=0.001, min_epsilon=0.01,
-                 gamma=0.9, alpha=0.1):
-        super().__init__(epsilon=epsilon, epsilon_decay=epsilon_decay, min_epsilon=min_epsilon)
+    def __init__(self, n_states, n_actions, config: AgentConfig, n_step_size=5):
+        super().__init__(config)
         self.n_states = n_states
         self.n_actions = n_actions
         self.n_step_size = n_step_size
-
-        self.gamma = gamma
-        self.alpha = alpha
 
         self.Q = np.zeros((n_states, n_actions))
 
@@ -75,12 +73,12 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
             ])
 
             G = sum([
-                pow(self.gamma, i - tau - 1) * self.observed_rewards[self.modded(i)]
+                pow(self.c.gamma, i - tau - 1) * self.observed_rewards[self.modded(i)]
                 for i in range(tau + 1, min(tau + self.n_step_size, self.T) + 1)
             ])
 
             if tau + self.n_step_size < self.T:
-                G += pow(self.gamma, self.n_step_size) * self.Q[
+                G += pow(self.c.gamma, self.n_step_size) * self.Q[
                     self.observed_states[self.modded(tau + self.n_step_size)],
                     self.selected_actions[self.modded(tau + self.n_step_size)]
                 ]
@@ -94,7 +92,7 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
             self.Q[
                 self.observed_states[self.modded(tau)],
                 self.selected_actions[self.modded(tau)]
-            ] += self.alpha * rho * (
+            ] += self.c.alpha * rho * (
                     G -
                     self.Q[
                         self.observed_states[self.modded(tau)],
@@ -106,4 +104,8 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
         return idx % (self.n_step_size + 1)
 
     def pi_ai_si(self, i):
-        return 1 if self.selected_actions[self.modded(i)] == self.greedy_action_select(self.Q[self.observed_states[self.modded(i)], :]) else 0
+        return 1 if self.selected_actions[self.modded(i)] == self.greedy_action_select(
+            self.Q[self.observed_states[self.modded(i)], :]) else 0
+
+    def state_values(self):
+        return np.array([np.mean(r) for r in self.Q])

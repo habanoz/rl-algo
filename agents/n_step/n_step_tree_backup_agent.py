@@ -1,17 +1,15 @@
 from agents.base_agent import BaseAgent
 import numpy as np
 
+from model.agent_config import AgentConfig
+
 
 class NStepTreeBackupAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, n_step_size=5, epsilon=0.5, epsilon_decay=0.001, min_epsilon=0.01,
-                 gamma=0.9, alpha=0.1):
-        super().__init__(epsilon=epsilon, epsilon_decay=epsilon_decay, min_epsilon=min_epsilon)
+    def __init__(self, n_states, n_actions, config: AgentConfig, n_step_size=5):
+        super().__init__(config)
         self.n_states = n_states
         self.n_actions = n_actions
         self.n_step_size = n_step_size
-
-        self.gamma = gamma
-        self.alpha = alpha
 
         self.Q = np.zeros((n_states, n_actions))
 
@@ -75,7 +73,7 @@ class NStepTreeBackupAgent(BaseAgent):
             if self.t + 1 >= self.T:
                 G = self.observed_rewards[self.modded(self.T)]
             else:
-                G = self.observed_rewards[self.modded(self.t + 1)] + self.gamma * sum(
+                G = self.observed_rewards[self.modded(self.t + 1)] + self.c.gamma * sum(
                     [
                         self.pi_a_st(a, self.t + 1) * self.Q[self.observed_states[self.modded(self.t + 1)], a]
                         for a in range(self.n_actions)
@@ -85,12 +83,12 @@ class NStepTreeBackupAgent(BaseAgent):
             for k in range(min(self.t, self.T - 1), tau, -1):  # tau + 1 + (-1) for a closed range
                 ak = self.selected_actions[self.modded(k)]
 
-                G = self.observed_rewards[self.modded(k)] + self.gamma * sum(
+                G = self.observed_rewards[self.modded(k)] + self.c.gamma * sum(
                     [
                         self.pi_a_st(a, k) * self.Q[self.observed_states[self.modded(k)], a]
                         for a in range(self.n_actions) if a != ak
                     ]
-                ) + self.gamma * self.pi_a_st(ak, k) * G
+                ) + self.c.gamma * self.pi_a_st(ak, k) * G
 
             # add training error
             self.add_training_error(G, self.Q[
@@ -101,7 +99,7 @@ class NStepTreeBackupAgent(BaseAgent):
             self.Q[
                 self.observed_states[self.modded(tau)],
                 self.selected_actions[self.modded(tau)]
-            ] += self.alpha * (
+            ] += self.c.alpha * (
                     G -
                     self.Q[
                         self.observed_states[self.modded(tau)],
@@ -115,3 +113,6 @@ class NStepTreeBackupAgent(BaseAgent):
     def pi_a_st(self, a, t):
         return 1 if a == self.greedy_action_select(
             self.Q[self.observed_states[self.modded(t)], :]) else 0
+
+    def state_values(self):
+        return np.array([np.mean(r) for r in self.Q])

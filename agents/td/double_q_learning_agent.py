@@ -3,14 +3,14 @@ import numpy.random
 from agents.base_agent import BaseAgent
 import numpy as np
 
+from model.agent_config import AgentConfig
+
 
 class DoubleQLearningAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, epsilon=0.5, epsilon_decay=0.001, min_epsilon=0.01, gamma=0.9, alpha=0.1):
-        super().__init__(epsilon=epsilon, epsilon_decay=epsilon_decay, min_epsilon=min_epsilon)
+    def __init__(self, n_states, n_actions, config: AgentConfig):
+        super().__init__(config)
         self.n_states = n_states
         self.n_actions = n_actions
-        self.gamma = gamma
-        self.alpha = alpha
 
         self.Q1 = np.zeros((n_states, n_actions))
         self.Q2 = np.zeros((n_states, n_actions))
@@ -23,20 +23,23 @@ class DoubleQLearningAgent(BaseAgent):
 
             # add training error
             self.add_training_error(
-                reward + self.gamma * self.Q1[next_state, self.greedy_action_select(self.Q2[next_state, :])],
+                reward + self.c.gamma * self.Q1[next_state, self.greedy_action_select(self.Q2[next_state, :])],
                 self.Q1[state, action])
 
-            self.Q1[state, action] += self.alpha * (
-                    reward + self.gamma * self.Q1[next_state, self.greedy_action_select(self.Q2[next_state, :])] -
+            self.Q1[state, action] += self.c.alpha * (
+                    reward + self.c.gamma * self.Q1[next_state, self.greedy_action_select(self.Q2[next_state, :])] -
                     self.Q1[state, action])
         else:
             # add training error
             self.add_training_error(
-                reward + self.gamma * self.Q2[next_state, self.greedy_action_select(self.Q1[next_state, :])],
+                reward + self.c.gamma * self.Q2[next_state, self.greedy_action_select(self.Q1[next_state, :])],
                 self.Q2[state, action])
 
-            self.Q2[state, action] += self.alpha * (
-                    reward + self.gamma * self.Q2[next_state, self.greedy_action_select(self.Q1[next_state, :])] -
+            self.Q2[state, action] += self.c.alpha * (
+                    reward + self.c.gamma * self.Q2[next_state, self.greedy_action_select(self.Q1[next_state, :])] -
                     self.Q2[state, action])
 
         super().update(state, action, reward, done, next_state)
+
+    def state_values(self):
+        return np.array([np.mean((r1 + r2) / 2) for r1, r2 in zip(self.Q1, self.Q2)])

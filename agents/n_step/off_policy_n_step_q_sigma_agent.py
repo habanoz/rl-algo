@@ -1,17 +1,15 @@
 from agents.base_agent import BaseAgent
 import numpy as np
 
+from model.agent_config import AgentConfig
+
 
 class OffPolicyNStepQSigmaAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, n_step_size=5, epsilon=0.5, epsilon_decay=0.001, min_epsilon=0.01,
-                 gamma=0.9, alpha=0.1, sigma=None):
-        super().__init__(epsilon=epsilon, epsilon_decay=epsilon_decay, min_epsilon=min_epsilon)
+    def __init__(self, n_states, n_actions, config: AgentConfig, n_step_size=5, sigma=None):
+        super().__init__(config)
         self.n_states = n_states
         self.n_actions = n_actions
         self.n_step_size = n_step_size
-
-        self.gamma = gamma
-        self.alpha = alpha
 
         self.Q = np.zeros((n_states, n_actions))
         if sigma is None:
@@ -85,7 +83,7 @@ class OffPolicyNStepQSigmaAgent(BaseAgent):
             if self.t + 1 >= self.T:
                 G = self.observed_rewards[self.modded(self.T)]
             else:
-                G = self.observed_rewards[self.modded(self.t + 1)] + self.gamma * sum(
+                G = self.observed_rewards[self.modded(self.t + 1)] + self.c.gamma * sum(
                     [
                         self.pi_a_st(a, self.t + 1) * self.Q[self.observed_states[self.modded(self.t + 1)], a]
                         for a in range(self.n_actions)
@@ -103,11 +101,11 @@ class OffPolicyNStepQSigmaAgent(BaseAgent):
                         for a in range(self.n_actions)
                     ])
 
-                    G = self.observed_rewards[self.modded(k)] + self.gamma * (
+                    G = self.observed_rewards[self.modded(k)] + self.c.gamma * (
                             self.sigma[self.modded(k)] * self.rho[self.modded(k)] +
                             (1 - self.sigma[self.modded(k)]) * self.pi_a_st(self.selected_actions[self.modded(k)], k)
                     ) * (G - self.Q[self.observed_states[self.modded(k)], self.selected_actions[self.modded(k)]]) \
-                        + self.gamma * v_bar
+                        + self.c.gamma * v_bar
 
             # add training error
             self.add_training_error(G, self.Q[
@@ -118,7 +116,7 @@ class OffPolicyNStepQSigmaAgent(BaseAgent):
             self.Q[
                 self.observed_states[self.modded(tau)],
                 self.selected_actions[self.modded(tau)]
-            ] += self.alpha * (
+            ] += self.c.alpha * (
                     G -
                     self.Q[
                         self.observed_states[self.modded(tau)],
@@ -132,3 +130,6 @@ class OffPolicyNStepQSigmaAgent(BaseAgent):
     def pi_a_st(self, a, t):
         return 1 if a == self.greedy_action_select(
             self.Q[self.observed_states[self.modded(t)], :]) else 0
+
+    def state_values(self):
+        return np.array([np.mean(r) for r in self.Q])
