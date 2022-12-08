@@ -32,7 +32,6 @@ class BaseAgent(ABC):
         self._incremental_training_error = 0
 
     def greedy_action_select(self, nd_array1):
-
         max_val = np.max(nd_array1)
         return np.random.choice(np.where(nd_array1 == max_val)[0])
 

@@ -21,23 +21,19 @@ class DoubleQLearningAgent(BaseAgent):
     def update(self, state, action, reward, done, next_state):
         if numpy.random.binomial(1, 0.5) == 1:
 
-            # add training error
-            self.add_training_error(
-                reward + self.c.gamma * self.Q1[next_state, self.greedy_action_select(self.Q2[next_state, :])],
-                self.Q1[state, action])
+            new_est = reward + self.c.gamma * self.Q2[next_state, self.greedy_action_select(self.Q1[next_state, :])]
 
-            self.Q1[state, action] += self.c.alpha * (
-                    reward + self.c.gamma * self.Q1[next_state, self.greedy_action_select(self.Q2[next_state, :])] -
-                    self.Q1[state, action])
+            # add training error
+            self.add_training_error(new_est, self.Q1[state, action])
+
+            self.Q1[state, action] += self.c.alpha * (new_est - self.Q1[state, action])
         else:
-            # add training error
-            self.add_training_error(
-                reward + self.c.gamma * self.Q2[next_state, self.greedy_action_select(self.Q1[next_state, :])],
-                self.Q2[state, action])
+            new_est = reward + self.c.gamma * self.Q1[next_state, self.greedy_action_select(self.Q2[next_state, :])]
 
-            self.Q2[state, action] += self.c.alpha * (
-                    reward + self.c.gamma * self.Q2[next_state, self.greedy_action_select(self.Q1[next_state, :])] -
-                    self.Q2[state, action])
+            # add training error
+            self.add_training_error(new_est, self.Q2[state, action])
+
+            self.Q2[state, action] += self.c.alpha * (new_est - self.Q2[state, action])
 
         super().update(state, action, reward, done, next_state)
 
