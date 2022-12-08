@@ -21,8 +21,7 @@ from util.serialize_helper import serialize_values, deserialize_values
 
 
 def generate_baseline(env, name: str, n_episodes=1000):
-    agent = OnPolicyFirstVisitMcAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes,
-                                      min_epsilon=0.01)
+    agent = OnPolicyFirstVisitMcAgent(n_obs, n_actions)
 
     for episode in tqdm(range(n_episodes)):
 
@@ -76,7 +75,7 @@ def generate_episodes(env, agent, n_episodes=1000, value_baseline=None):
 
 
 def execute(agent_factory, env, n_runs=10, n_episodes=10_000, value_baseline=None):
-    rolling_length = n_episodes // 100
+    rolling_length = max(n_episodes // 100, 1)
 
     w_env = EpisodeStatsWrapper(env, n_runs=n_runs, n_episodes=n_episodes)
 
@@ -132,7 +131,7 @@ def execute(agent_factory, env, n_runs=10, n_episodes=10_000, value_baseline=Non
             / rolling_length
     )
 
-    return EpisodesStats(reward_moving_average, cum_reward_moving_average, length_moving_average,
+    return EpisodesStats(reward_moving_average, cum_rewards_means, length_moving_average,
                          rms_error_moving_average, training_error_moving_average)
 
 
@@ -203,7 +202,6 @@ def train_4(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseli
     plt.show()
 
 
-
 def train_4_n_td(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseline: ndarray = None):
     label1 = "sarsa"
     label2 = "sarsa n-1"
@@ -241,10 +239,10 @@ def train_4_n_td(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_b
     axs[0].legend()
 
     axs[1].set_title("Cumulative Rewards")
-    axs[1].plot(x_ticks, stats1.cum_rewards, label=label1)
-    axs[1].plot(x_ticks, stats2.cum_rewards, label=label2)
-    axs[1].plot(x_ticks, stats3.cum_rewards, label=label3)
-    axs[1].plot(x_ticks, stats4.cum_rewards, label=label4)
+    axs[1].plot(range(len(stats1.cum_rewards)), stats1.cum_rewards, label=label1)
+    axs[1].plot(range(len(stats2.cum_rewards)), stats2.cum_rewards, label=label2)
+    axs[1].plot(range(len(stats3.cum_rewards)), stats3.cum_rewards, label=label3)
+    axs[1].plot(range(len(stats4.cum_rewards)), stats4.cum_rewards, label=label4)
     axs[1].legend()
 
     axs[2].set_title("Episode Lengths")
@@ -271,9 +269,34 @@ def train_4_n_td(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_b
     plt.tight_layout()
     plt.show()
 
+
+def train_2(env, n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseline: ndarray = None):
+    label1 = "sarsa"
+    label2 = "sarsa n-1"
+    label3 = "sarsa n-2"
+    label4 = "sarsa n-3"
+
+    # cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.05, gamma=0.9)
+    cfg = AgentConfig(epsilon=.1, epsilon_decay=None, min_epsilon=0.01, alpha=0.05, gamma=0.9)
+    cfg.actions_to_take = [1, 1, 2, 1, 2, 3, 3, 3, 0, 0] * 2 + [1, 2]
+
+
+    # agent 2
+    agent2 = lambda: NStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=1)
+    stats2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
+
+    print("NStepSarsaAgent completed ************")
+
+
+    # agent 1
+    agent1 = lambda: SarsaAgent(n_obs, n_actions, cfg)
+    stats1 = execute(agent1, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
+
+    print("SarsaAgent completed ************")
+
 if __name__ == '__main__':
-    runs = 1
-    n_episodes = 10_000
+    runs = 100
+    n_episodes = 5000
 
     # set render_mode to "Human" to
     env = gym.make('FrozenLake-v1', desc=None, map_name="4x4", is_slippery=False, render_mode=None)
@@ -282,3 +305,4 @@ if __name__ == '__main__':
 
     # generate_baseline(env, n_episodes=30_000, name="frozen_lake_4by4_no_slippery")
     train_4_n_td(n_obs, n_actions, runs, n_episodes, deserialize_values(name="frozen_lake_4by4_no_slippery"))
+    # train_2(env, n_obs, n_actions, runs, n_episodes, deserialize_values(name="frozen_lake_4by4_no_slippery"))

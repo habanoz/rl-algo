@@ -11,10 +11,16 @@ class BaseAgent(ABC):
         self._incremental_training_error = 0
         self.total_training_error = 0
 
+        self.actions_to_take = None
+        if config.actions_to_take is not None and len(config.actions_to_take) > 0:
+            self.actions_to_take = list(config.actions_to_take)
+
     def get_action(self, obs):
         pass
 
     def update(self, state, action, reward, done, next_state):
+        # print(f"state:{state} action:{action} reward:{reward} next_state:{next_state} done:{done}")
+
         if done:
             self.do_after_episode()
 
@@ -26,10 +32,15 @@ class BaseAgent(ABC):
         self._incremental_training_error = 0
 
     def greedy_action_select(self, nd_array1):
+
         max_val = np.max(nd_array1)
         return np.random.choice(np.where(nd_array1 == max_val)[0])
 
     def epsilon_greedy_action_select(self, nd_array1_q):
+        # this is for debugging. Return one of the predefined actions, if defined...
+        if self.actions_to_take is not None and len(self.actions_to_take) > 0:
+            return self.actions_to_take.pop(0)
+
         if np.random.binomial(1, self.c.epsilon) == 1:
             return np.random.choice(len(nd_array1_q))
         else:

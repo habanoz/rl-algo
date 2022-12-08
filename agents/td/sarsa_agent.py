@@ -5,7 +5,7 @@ from model.agent_config import AgentConfig
 
 
 class SarsaAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, config:AgentConfig):
+    def __init__(self, n_states, n_actions, config: AgentConfig):
         super().__init__(config)
         self.n_states = n_states
         self.n_actions = n_actions
@@ -14,21 +14,21 @@ class SarsaAgent(BaseAgent):
         self.next_action = None
 
     def get_action(self, state):
-        if self.next_action:
+        if self.next_action is not None:
             return self.next_action
 
         return self.epsilon_greedy_action_select(self.Q[state, :])
 
     def update(self, state, action, reward, done, next_state):
-        next_action = self.epsilon_greedy_action_select(self.Q[next_state, :])
+        _next_action = self.epsilon_greedy_action_select(self.Q[next_state, :])
 
         # add training error
-        self.add_training_error(reward + self.c.gamma * self.Q[next_state, next_action], self.Q[state, action])
+        self.add_training_error(reward + self.c.gamma * self.Q[next_state, _next_action], self.Q[state, action])
 
         self.Q[state, action] += self.c.alpha * (
-                reward + self.c.gamma * self.Q[next_state, next_action] - self.Q[state, action])
+                reward + self.c.gamma * self.Q[next_state, _next_action] - self.Q[state, action])
 
-        self.next_action = None if done else next_action
+        self.next_action = None if done else _next_action
 
         super().update(state, action, reward, done, next_state)
 

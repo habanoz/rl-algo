@@ -5,7 +5,7 @@ import numpy as np
 class EpisodeStatsWrapper(gym.Wrapper):
     def __init__(self, env: gym.Env, n_runs: int = 5, n_episodes: int = 1000):
         super().__init__(env)
-        
+
         self.n_episodes = n_episodes
         self.rewards: np.ndarray = np.empty((n_runs, n_episodes))
         self.cum_rewards: np.ndarray = np.empty((n_runs, n_episodes))
@@ -46,6 +46,9 @@ class EpisodeStatsWrapper(gym.Wrapper):
             self.rewards[run, episode] = self.episode_reward_sum
             self.cum_rewards[run, episode] = self.episodes_cum_reward_sum
             self.lengths[run, episode] = self.episode_length
+
+            if episode == self.n_episodes - 1:
+                self.episodes_cum_reward_sum = 0
 
         return (
             obs,

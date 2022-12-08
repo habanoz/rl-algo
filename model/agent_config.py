@@ -7,3 +7,4 @@ class AgentConfig:
         self.alpha = alpha
         self.gamma = gamma
         self.lambdaa = lambdaa
+        self.actions_to_take = None
