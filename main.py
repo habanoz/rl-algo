@@ -44,7 +44,9 @@ def generate_baseline(env, name: str, n_episodes=1000):
 
 
 def generate_episodes(env, agent, n_episodes=1000, value_baseline=None):
-    errors = np.empty(n_episodes)
+    value_errors = np.empty(n_episodes)
+    training_errors = np.empty(n_episodes)
+
     for episode in tqdm(range(n_episodes)):
 
         obs, info = env.reset()
@@ -64,9 +66,11 @@ def generate_episodes(env, agent, n_episodes=1000, value_baseline=None):
             obs = next_obs
 
         state_values = np.array([np.mean(r) for r in agent.Q])
-        errors[episode] = RMSErrorsForBaseline(value_baseline).calculate_for_state(state_values)
+        value_errors[episode] = RMSErrorsForBaseline(value_baseline).calculate_for_state(state_values)
 
-    return errors
+        training_errors[episode] = agent.total_training_error
+
+    return value_errors, training_errors
 
 
 def execute(agent_factory, env, n_runs=10, n_episodes=10_000, value_baseline=None):
@@ -75,12 +79,18 @@ def execute(agent_factory, env, n_runs=10, n_episodes=10_000, value_baseline=Non
     w_env = EpisodeStatsWrapper(env, n_runs=n_runs, n_episodes=n_episodes)
 
     rms_errors = np.zeros(n_episodes)
+    training_errors = np.zeros(n_episodes)
     for run in range(n_runs):
         agent = agent_factory()
 
-        rms_errors += generate_episodes(w_env, agent, n_episodes=n_episodes, value_baseline=value_baseline)
+        new_rms_errors, new_training_errors = generate_episodes(w_env, agent, n_episodes=n_episodes,
+                                                                value_baseline=value_baseline)
+
+        rms_errors += new_rms_errors
+        training_errors += new_training_errors
 
     rms_errors = rms_errors / runs
+    training_errors = training_errors / runs
 
     rewards_means = np.mean(w_env.rewards, axis=0)
     reward_moving_average = (
@@ -113,8 +123,15 @@ def execute(agent_factory, env, n_runs=10, n_episodes=10_000, value_baseline=Non
             / rolling_length
     )
 
+    training_error_moving_average = (
+            np.convolve(
+                training_errors, np.ones(rolling_length), mode="valid"
+            )
+            / rolling_length
+    )
+
     return EpisodesStats(reward_moving_average, cum_reward_moving_average, length_moving_average,
-                         rms_error_moving_average)
+                         rms_error_moving_average, training_error_moving_average)
 
 
 def train_4(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseline: ndarray = None):
@@ -133,15 +150,16 @@ def train_4(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseli
     stats2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
     # agent 3
-    agent3 = lambda: OffPolicyNStepQSigmaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes, alpha=0.05,
-                                     n_step_size=2)
+    agent3 = lambda: OffPolicyNStepQSigmaAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes,
+                                               alpha=0.05,
+                                               n_step_size=2)
     stats3 = execute(agent3, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
     # agent 4
     agent4 = lambda: OnPolicyFirstVisitMcAgent(n_obs, n_actions, epsilon=1.0, epsilon_decay=0.99 / n_episodes)
     stats4 = execute(agent4, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
-    fig, axs = plt.subplots(ncols=1, nrows=4, figsize=(20, 10))
+    fig, axs = plt.subplots(ncols=1, nrows=5, figsize=(20, 10))
 
     x_ticks = range(len(stats1.rewards))
 
@@ -167,13 +185,19 @@ def train_4(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseli
     axs[2].legend()
 
     axs[3].set_title("RMS Errors")
-    axs[3].plot(x_ticks, stats1.errors, label=label1)
-    axs[3].plot(x_ticks, stats2.errors, label=label2)
-    axs[3].plot(x_ticks, stats3.errors, label=label3)
-    axs[3].plot(x_ticks, stats4.errors, label=label4)
+    axs[3].plot(x_ticks, stats1.value_errors, label=label1)
+    axs[3].plot(x_ticks, stats2.value_errors, label=label2)
+    axs[3].plot(x_ticks, stats3.value_errors, label=label3)
+    axs[3].plot(x_ticks, stats4.value_errors, label=label4)
     axs[3].legend()
 
-    os.system('spd-say "your program has finished"')
+    axs[4].set_title("Training Errors")
+    axs[4].plot(x_ticks, stats1.training_errors, label=label1)
+    axs[4].plot(x_ticks, stats2.training_errors, label=label2)
+    axs[4].plot(x_ticks, stats3.training_errors, label=label3)
+    axs[4].plot(x_ticks, stats4.training_errors, label=label4)
+    axs[4].legend()
+
     plt.tight_layout()
     plt.show()
 

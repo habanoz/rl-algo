@@ -46,6 +46,9 @@ class OnPolicyFirstVisitMcAgent(BaseAgent):
             G = self.gama * G + rt
 
             if first_visit:
+                # record training error
+                self.add_training_error(G, np.mean(self.returns[(st, at)]))
+
                 self.returns[(st, at)].append(G)
                 self.Q[st, at] = np.mean(self.returns[(st, at)])
 

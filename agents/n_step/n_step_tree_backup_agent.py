@@ -92,6 +92,12 @@ class NStepTreeBackupAgent(BaseAgent):
                     ]
                 ) + self.gamma * self.pi_a_st(ak, k) * G
 
+            # add training error
+            self.add_training_error(G, self.Q[
+                self.observed_states[self.modded(tau)],
+                self.selected_actions[self.modded(tau)]
+            ])
+
             self.Q[
                 self.observed_states[self.modded(tau)],
                 self.selected_actions[self.modded(tau)]

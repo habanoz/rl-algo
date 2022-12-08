@@ -6,6 +6,8 @@ class BaseAgent:
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
         self.min_epsilon = min_epsilon
+        self._incremental_training_error = 0
+        self.total_training_error = 0
 
     def get_action(self, obs):
         pass
@@ -18,6 +20,9 @@ class BaseAgent:
         if self.epsilon_decay is not None and self.epsilon_decay > 0:
             self.epsilon = max(self.epsilon - self.epsilon_decay, self.min_epsilon, 0.0)
 
+        self.total_training_error = self._incremental_training_error
+        self._incremental_training_error = 0
+
     def greedy_action_select(self, nd_array1):
         max_val = np.max(nd_array1)
         return np.random.choice(np.where(nd_array1 == max_val)[0])
@@ -27,3 +32,6 @@ class BaseAgent:
             return np.random.choice(len(nd_array1_q))
         else:
             return self.greedy_action_select(nd_array1_q)
+
+    def add_training_error(self, new_estimate, old_estimate):
+        self._incremental_training_error += new_estimate - old_estimate

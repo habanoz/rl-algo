@@ -109,6 +109,12 @@ class OffPolicyNStepQSigmaAgent(BaseAgent):
                     ) * (G - self.Q[self.observed_states[self.modded(k)], self.selected_actions[self.modded(k)]]) \
                         + self.gamma * v_bar
 
+            # add training error
+            self.add_training_error(G, self.Q[
+                self.observed_states[self.modded(tau)],
+                self.selected_actions[self.modded(tau)]
+            ])
+
             self.Q[
                 self.observed_states[self.modded(tau)],
                 self.selected_actions[self.modded(tau)]

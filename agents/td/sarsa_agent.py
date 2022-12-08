@@ -24,6 +24,9 @@ class SarsaAgent(BaseAgent):
     def update(self, state, action, reward, done, next_state):
         next_action = self.epsilon_greedy_action_select(self.Q[next_state, :])
 
+        # add training error
+        self.add_training_error(reward + self.gamma * self.Q[next_state, next_action], self.Q[state, action])
+
         self.Q[state, action] += self.alpha * (
                 reward + self.gamma * self.Q[next_state, next_action] - self.Q[state, action])
 

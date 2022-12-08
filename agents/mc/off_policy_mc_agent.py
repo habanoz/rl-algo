@@ -40,8 +40,11 @@ class OffPolicyMcAgent(BaseAgent):
 
             G = self.gama * G + rt
 
+            # record training error
+            self.add_training_error(G, self.Q[st, at])
+
             self.C[st, at] += W
-            self.Q[st, at] += (W / self.C[st, at])*(G - self.Q[st, at])
+            self.Q[st, at] += (W / self.C[st, at]) * (G - self.Q[st, at])
 
             self.pi[st] = self.greedy_action_select(self.Q[st, :])
 

@@ -67,7 +67,7 @@ class NStepSarsaAgent(BaseAgent):
         super().update(state, action, reward, done, next_state)
 
     def update_tau(self, tau):
-        
+
         if tau >= 0:
             G = sum([
                 pow(self.gamma, i - tau - 1) * self.observed_rewards[self.modded(i)]
@@ -79,6 +79,12 @@ class NStepSarsaAgent(BaseAgent):
                     self.observed_states[self.modded(tau + self.n_step_size)],
                     self.selected_actions[self.modded(tau + self.n_step_size)]
                 ]
+
+            # add training error
+            self.add_training_error(G, self.Q[
+                self.observed_states[self.modded(tau)],
+                self.selected_actions[self.modded(tau)]
+            ])
 
             self.Q[
                 self.observed_states[self.modded(tau)],
