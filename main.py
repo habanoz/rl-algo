@@ -6,6 +6,7 @@ import numpy as np
 from numpy import ndarray
 from tqdm import tqdm
 
+from agents.mc.off_policy_mc_agent import OffPolicyMcAgent
 from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
 from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
 from agents.n_step.off_policy_n_step_q_sigma_agent import OffPolicyNStepQSigmaAgent
@@ -206,8 +207,8 @@ def train_4_n_td(cfg: AgentConfig, n_obs: int, n_actions: int, runs: int, n_epis
                  value_baseline: ndarray = None):
     label1 = "sarsa"
     label2 = "sarsa n-3"
-    label3 = "QL"
-    label4 = "D-QL"
+    label3 = "off-MC"
+    label4 = "MC"
 
     # agent 1
     agent1 = lambda: SarsaAgent(n_obs, n_actions, cfg)
@@ -218,11 +219,12 @@ def train_4_n_td(cfg: AgentConfig, n_obs: int, n_actions: int, runs: int, n_epis
     stats2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
     # agent 3
-    agent3 = lambda: QLearningAgent(n_obs, n_actions, cfg)
+    agent3 = lambda: OffPolicyMcAgent(n_obs, n_actions, cfg)
     stats3 = execute(agent3, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
     # agent 4
-    agent4 = lambda: DoubleQLearningAgent(n_obs, n_actions, cfg)
+    # agent4 = lambda: OnPolicyFirstVisitMcAgent(n_obs, n_actions, cfg)
+    agent4 = lambda: NStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=4)
     stats4 = execute(agent4, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
     fig, axs = plt.subplots(ncols=1, nrows=5, figsize=(20, 10))
@@ -292,8 +294,8 @@ def train_2(env, n_obs: int, n_actions: int, runs: int, n_episodes: int, value_b
 
 
 if __name__ == '__main__':
-    runs = 5
-    n_episodes = 5_000
+    runs = 3
+    n_episodes = 10_000
 
     # set render_mode to "Human" to
     env = gym.make('FrozenLake-v1', desc=None, map_name="4x4", is_slippery=False, render_mode=None)
@@ -302,7 +304,7 @@ if __name__ == '__main__':
 
     # cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.05, gamma=0.9)
     # cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.05, gamma=0.9)
-    cfg = AgentConfig(epsilon=0.5, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.3, gamma=0.9)
+    cfg = AgentConfig(epsilon=0.1, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.3, gamma=0.9)
 
     # generate_baseline(env, n_episodes=30_000, name="frozen_lake_4by4_no_slippery")
     train_4_n_td(cfg, n_obs, n_actions, runs, n_episodes, deserialize_values(name="frozen_lake_4by4_no_slippery"))

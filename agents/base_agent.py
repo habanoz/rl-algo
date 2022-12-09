@@ -9,6 +9,7 @@ class BaseAgent(ABC):
     def __init__(self, config: AgentConfig):
         self.c = config
         self._incremental_training_error = 0
+        self._n_incremental_training_errors = 0
         self.total_training_error = 0
 
         self.actions_to_take = None
@@ -28,8 +29,10 @@ class BaseAgent(ABC):
         if self.c.epsilon_decay is not None and self.c.epsilon_decay > 0:
             self.c.epsilon = max(self.c.epsilon - self.c.epsilon_decay, self.c.min_epsilon, 0.0)
 
-        self.total_training_error = self._incremental_training_error
+        # self.total_training_error = np.sqrt(self._incremental_training_error / max(self._n_incremental_training_errors, 1))
+        self.total_training_error = self._incremental_training_error / max(self._n_incremental_training_errors, 1)
         self._incremental_training_error = 0
+        self._n_incremental_training_errors = 0
 
     def greedy_action_select(self, nd_array1):
         max_val = np.max(nd_array1)
@@ -46,7 +49,9 @@ class BaseAgent(ABC):
             return self.greedy_action_select(nd_array1_q)
 
     def add_training_error(self, new_estimate, old_estimate):
-        self._incremental_training_error += new_estimate - old_estimate
+        #self._incremental_training_error += pow(new_estimate - old_estimate, 2)
+        self._incremental_training_error += abs(new_estimate - old_estimate)
+        self._n_incremental_training_errors += 1
 
     @abstractmethod
     def state_values(self):
