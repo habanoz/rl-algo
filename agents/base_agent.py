@@ -9,7 +9,7 @@ class BaseAgent(ABC):
     def __init__(self, config: AgentConfig, identifier=None):
         self.c = config
         self.identifier = identifier
-        
+
         self._incremental_training_error = 0
         self._n_incremental_training_errors = 0
         self.total_training_error = 0
@@ -42,6 +42,10 @@ class BaseAgent(ABC):
     def greedy_action_select(self, nd_array1):
         max_val = np.max(nd_array1)
         return np.random.choice(np.where(nd_array1 == max_val)[0])
+
+    def greedy_action_set(self, nd_array1):
+        max_val = np.max(nd_array1)
+        return np.where(nd_array1 == max_val)[0]
 
     def epsilon_greedy_action_select(self, nd_array1_q):
         # this is for debugging. Return one of the predefined actions, if defined...

@@ -397,8 +397,8 @@ def train_agents(agents, labels, runs: int, n_episodes: int, value_baseline: nda
 
 
 if __name__ == '__main__':
-    runs = 5
-    n_episodes = 10_000
+    runs = 1
+    n_episodes = 3_000
 
     # set render_mode to "Human" to
     env = gym.make('FrozenLake-v1', desc=None, map_name="4x4", is_slippery=False, render_mode=None)
@@ -406,31 +406,32 @@ if __name__ == '__main__':
     n_actions = env.action_space.n
 
     # cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.05, gamma=0.9)
-    cfg = AgentConfig(epsilon=0.4, epsilon_decay=None, min_epsilon=0.01, alpha=0.1, gamma=0.9)
+    cfg = AgentConfig(epsilon=0.4, epsilon_decay=None, min_epsilon=0.01, alpha=0.9, gamma=0.9)
 
     # generate_baseline(env, n_episodes=30_000, name="frozen_lake_4by4_no_slippery")
 
     agents = [
         # lambda: OffPolicyNStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=1),
-        lambda: NStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=1),
-        lambda: ExpectedSarsaAgent(n_obs, n_actions, cfg),
+        # lambda: NStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=1),
+        # lambda: ExpectedSarsaAgent(n_obs, n_actions, cfg),
         # lambda: OffPolicyNStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3),
         # lambda: NStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3),
-        lambda: SarsaAgent(n_obs, n_actions, cfg),
-        lambda: QLearningAgent(n_obs, n_actions, cfg),
-        lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=1),
-        #lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=3),
+        # lambda: SarsaAgent(n_obs, n_actions, cfg),
+        # lambda: QLearningAgent(n_obs, n_actions, cfg),
+        # lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=1),
+        # lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=3),
+        lambda: OffPolicyNStepQSigmaAgent(n_obs, n_actions, cfg, n_step_size=1)
     ]
 
     labels = [
         # "OffPolicyNStepSarsaAgent n-1",
-         "NStepSarsaAgent n-1",
-        "ExpectedSarsa",
+        # "NStepSarsaAgent n-1",
+        # "ExpectedSarsa",
         # "OffPolicyNStepSarsaAgent n-3",
         # "NStepSarsaAgent n-3",
-        "Sarsa",
-        "QL",
-        "TB-1",
-        #"TB-3",
+        # "QL",
+        # "TB-1",
+        # "TB-3",
+        "Q Sigma-n1"
     ]
     train_agents(agents, labels, runs, n_episodes, deserialize_values(name="frozen_lake_4by4_no_slippery"))

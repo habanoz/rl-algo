@@ -16,12 +16,15 @@ class ExpectedSarsaAgent(BaseAgent):
         return self.epsilon_greedy_action_select(self.Q[state, :])
 
     def update(self, state, action, reward, done, next_state):
-        # add training error
-        self.add_training_error(reward + self.c.gamma * max(self.Q[next_state, :]), self.Q[state, action])
+        new_estimate = reward + self.c.gamma * sum(
+            [self.pi_at_st(a, next_state) * self.Q[next_state, a]
+             for a in range(self.n_actions)]
+        )
 
-        self.Q[state, action] += self.c.alpha * (reward + self.c.gamma * sum(
-            [self.pi_at_st(a, next_state) * self.Q[next_state, a] for a in range(self.n_actions)]
-        ) - self.Q[state, action])
+        # add training error
+        self.add_training_error(new_estimate, self.Q[state, action])
+
+        self.Q[state, action] += self.c.alpha * (new_estimate - self.Q[state, action])
 
         super().update(state, action, reward, done, next_state)
 
