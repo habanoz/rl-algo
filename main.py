@@ -143,222 +143,6 @@ def execute(agent_factory, env, n_runs=10, n_episodes=10_000, value_baseline=Non
                          rms_error_moving_average, training_error_moving_average)
 
 
-def train_4(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseline: ndarray = None):
-    label1 = "sarsa"
-    label2 = "QL"
-    label3 = "D-QL"
-    label4 = "MC"
-
-    cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.05, gamma=0.9)
-
-    # agent 1
-    agent1 = lambda: SarsaAgent(n_obs, n_actions, cfg)
-    stats1 = execute(agent1, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
-
-    # agent 2
-    agent2 = lambda: QLearningAgent(n_obs, n_actions, cfg)
-    stats2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
-
-    # agent 3
-    agent3 = lambda: DoubleQLearningAgent(n_obs, n_actions, cfg)
-    stats3 = execute(agent3, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
-
-    # agent 4
-    agent4 = lambda: OnPolicyFirstVisitMcAgent(n_obs, n_actions, cfg)
-    stats4 = execute(agent4, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
-
-    fig, axs = plt.subplots(ncols=1, nrows=5, figsize=(20, 10))
-
-    x_ticks = range(len(stats1.rewards))
-
-    axs[0].set_title("Episode rewards")
-    axs[0].plot(x_ticks, stats1.rewards, label=label1)
-    axs[0].plot(x_ticks, stats2.rewards, label=label2)
-    axs[0].plot(x_ticks, stats3.rewards, label=label3)
-    axs[0].plot(x_ticks, stats4.rewards, label=label4)
-    axs[0].legend()
-
-    axs[1].set_title("Cumulative Rewards")
-    axs[1].plot(x_ticks, stats1.cum_rewards, label=label1)
-    axs[1].plot(x_ticks, stats2.cum_rewards, label=label2)
-    axs[1].plot(x_ticks, stats3.cum_rewards, label=label3)
-    axs[1].plot(x_ticks, stats4.cum_rewards, label=label4)
-    axs[1].legend()
-
-    axs[2].set_title("Episode Lengths")
-    axs[2].plot(x_ticks, stats1.lengths, label=label1)
-    axs[2].plot(x_ticks, stats2.lengths, label=label2)
-    axs[2].plot(x_ticks, stats3.lengths, label=label3)
-    axs[2].plot(x_ticks, stats4.lengths, label=label4)
-    axs[2].legend()
-
-    axs[3].set_title("RMS Errors")
-    axs[3].plot(x_ticks, stats1.value_errors, label=label1)
-    axs[3].plot(x_ticks, stats2.value_errors, label=label2)
-    axs[3].plot(x_ticks, stats3.value_errors, label=label3)
-    axs[3].plot(x_ticks, stats4.value_errors, label=label4)
-    axs[3].legend()
-
-    axs[4].set_title("Training Errors")
-    axs[4].plot(x_ticks, stats1.training_errors, label=label1)
-    axs[4].plot(x_ticks, stats2.training_errors, label=label2)
-    axs[4].plot(x_ticks, stats3.training_errors, label=label3)
-    axs[4].plot(x_ticks, stats4.training_errors, label=label4)
-    axs[4].legend()
-
-    plt.tight_layout()
-    plt.show()
-
-
-def train_4_n_td(cfg: AgentConfig, n_obs: int, n_actions: int, runs: int, n_episodes: int,
-                 value_baseline: ndarray = None):
-    label1 = "sarsa"
-    label2 = "TB n-3"
-    label3 = "off-MC"
-    label4 = "Off Policy Sarsa n-3"
-
-    # agent 1
-    agent1 = lambda: SarsaAgent(n_obs, n_actions, cfg)
-    stats1 = execute(agent1, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
-
-    # agent 2
-    agent2 = lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=3)
-    stats2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
-
-    # agent 3
-    agent3 = lambda: OffPolicyMcAgent(n_obs, n_actions, cfg)
-    stats3 = execute(agent3, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
-
-    # agent 4
-    # agent4 = lambda: OnPolicyFirstVisitMcAgent(n_obs, n_actions, cfg)
-    agent4 = lambda: OffPolicyNStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3)
-    stats4 = execute(agent4, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
-
-    fig, axs = plt.subplots(ncols=1, nrows=5, figsize=(20, 10))
-
-    x_ticks = range(len(stats1.rewards))
-
-    axs[0].set_title("Episode rewards")
-    axs[0].plot(x_ticks, stats1.rewards, label=label1)
-    axs[0].plot(x_ticks, stats2.rewards, label=label2)
-    axs[0].plot(x_ticks, stats3.rewards, label=label3)
-    axs[0].plot(x_ticks, stats4.rewards, label=label4)
-    axs[0].legend()
-
-    axs[1].set_title("Cumulative Rewards")
-    axs[1].plot(range(len(stats1.cum_rewards)), stats1.cum_rewards, label=label1)
-    axs[1].plot(range(len(stats2.cum_rewards)), stats2.cum_rewards, label=label2)
-    axs[1].plot(range(len(stats3.cum_rewards)), stats3.cum_rewards, label=label3)
-    axs[1].plot(range(len(stats4.cum_rewards)), stats4.cum_rewards, label=label4)
-    axs[1].legend()
-
-    axs[2].set_title("Episode Lengths")
-    axs[2].plot(x_ticks, stats1.lengths, label=label1)
-    axs[2].plot(x_ticks, stats2.lengths, label=label2)
-    axs[2].plot(x_ticks, stats3.lengths, label=label3)
-    axs[2].plot(x_ticks, stats4.lengths, label=label4)
-    axs[2].legend()
-
-    axs[3].set_title("RMS Errors")
-    axs[3].plot(x_ticks, stats1.value_errors, label=label1)
-    axs[3].plot(x_ticks, stats2.value_errors, label=label2)
-    axs[3].plot(x_ticks, stats3.value_errors, label=label3)
-    axs[3].plot(x_ticks, stats4.value_errors, label=label4)
-    axs[3].legend()
-
-    axs[4].set_title("Training Errors")
-    axs[4].plot(x_ticks, stats1.training_errors, label=label1)
-    axs[4].plot(x_ticks, stats2.training_errors, label=label2)
-    axs[4].plot(x_ticks, stats3.training_errors, label=label3)
-    axs[4].plot(x_ticks, stats4.training_errors, label=label4)
-    axs[4].legend()
-
-    plt.tight_layout()
-    plt.show()
-
-
-def train_2_n_td(cfg: AgentConfig, n_obs: int, n_actions: int, runs: int, n_episodes: int,
-                 value_baseline: ndarray = None):
-    label1 = "QL"
-    label2 = "Off Policy Sarsa n-3"
-
-    # agent 1
-    agent1 = lambda: QLearningAgent(n_obs, n_actions, cfg)
-    stats1 = execute(agent1, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
-
-    # agent 2
-    agent2 = lambda: OffPolicyNStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3)
-    stats2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
-
-    fig, axs = plt.subplots(ncols=1, nrows=5, figsize=(20, 10))
-
-    x_ticks = range(len(stats1.rewards))
-
-    axs[0].set_title("Episode rewards")
-    axs[0].plot(x_ticks, stats1.rewards, label=label1)
-    axs[0].plot(x_ticks, stats2.rewards, label=label2)
-    axs[0].legend()
-
-    axs[1].set_title("Cumulative Rewards")
-    axs[1].plot(range(len(stats1.cum_rewards)), stats1.cum_rewards, label=label1)
-    axs[1].plot(range(len(stats2.cum_rewards)), stats2.cum_rewards, label=label2)
-    axs[1].legend()
-
-    axs[2].set_title("Episode Lengths")
-    axs[2].plot(x_ticks, stats1.lengths, label=label1)
-    axs[2].plot(x_ticks, stats2.lengths, label=label2)
-    axs[2].legend()
-
-    axs[3].set_title("RMS Errors")
-    axs[3].plot(x_ticks, stats1.value_errors, label=label1)
-    axs[3].plot(x_ticks, stats2.value_errors, label=label2)
-    axs[3].legend()
-
-    axs[4].set_title("Training Errors")
-    axs[4].plot(x_ticks, stats1.training_errors, label=label1)
-    axs[4].plot(x_ticks, stats2.training_errors, label=label2)
-    axs[4].legend()
-
-    plt.tight_layout()
-    plt.show()
-
-
-def train_1(cfg: AgentConfig, n_obs: int, n_actions: int, runs: int, n_episodes: int,
-            value_baseline: ndarray = None):
-    label1 = "sarsa"
-
-    # agent 1
-    agent1 = lambda: OffPolicyNStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3)
-    stats1 = execute(agent1, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
-
-    fig, axs = plt.subplots(ncols=1, nrows=5, figsize=(20, 10))
-
-    x_ticks = range(len(stats1.rewards))
-
-    axs[0].set_title("Episode rewards")
-    axs[0].plot(x_ticks, stats1.rewards, label=label1)
-    axs[0].legend()
-
-    axs[1].set_title("Cumulative Rewards")
-    axs[1].plot(range(len(stats1.cum_rewards)), stats1.cum_rewards, label=label1)
-    axs[1].legend()
-
-    axs[2].set_title("Episode Lengths")
-    axs[2].plot(x_ticks, stats1.lengths, label=label1)
-    axs[2].legend()
-
-    axs[3].set_title("RMS Errors")
-    axs[3].plot(x_ticks, stats1.value_errors, label=label1)
-    axs[3].legend()
-
-    axs[4].set_title("Training Errors")
-    axs[4].plot(x_ticks, stats1.training_errors, label=label1)
-    axs[4].legend()
-
-    plt.tight_layout()
-    plt.show()
-
-
 def train_agents(agents, labels, runs: int, n_episodes: int, value_baseline: ndarray = None):
     stats = []
 
@@ -397,8 +181,8 @@ def train_agents(agents, labels, runs: int, n_episodes: int, value_baseline: nda
 
 
 if __name__ == '__main__':
-    runs = 10
-    n_episodes = 5_000
+    runs = 50
+    n_episodes = 1_000
 
     # set render_mode to "Human" to
     env = gym.make('FrozenLake-v1', desc=None, map_name="4x4", is_slippery=False, render_mode=None)
@@ -406,7 +190,7 @@ if __name__ == '__main__':
     n_actions = env.action_space.n
 
     # cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.05, gamma=0.9)
-    cfg = AgentConfig(epsilon=0.4, epsilon_decay=None, min_epsilon=0.01, alpha=0.1, gamma=0.9)
+    cfg = AgentConfig(epsilon=0.5, epsilon_decay=None, min_epsilon=0.01, alpha=0.1, gamma=0.9)
 
     # generate_baseline(env, n_episodes=30_000, name="frozen_lake_4by4_no_slippery")
 
@@ -417,12 +201,12 @@ if __name__ == '__main__':
         # lambda: OffPolicyNStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3),
         # lambda: NStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3),
         # lambda: SarsaAgent(n_obs, n_actions, cfg),
-        # lambda: QLearningAgent(n_obs, n_actions, cfg),
+        #lambda: QLearningAgent(n_obs, n_actions, cfg),
         lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=1),
-        lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=3),
+        lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=5),
         lambda: OffPolicyNStepQSigmaAgent(n_obs, n_actions, cfg, n_step_size=1),
         #lambda: OffPolicyNStepQSigmaAgent(n_obs, n_actions, cfg, n_step_size=2),
-        lambda: OffPolicyNStepQSigmaAgent(n_obs, n_actions, cfg, n_step_size=3),
+        lambda: OffPolicyNStepQSigmaAgent(n_obs, n_actions, cfg, n_step_size=5),
     ]
 
     labels = [
@@ -431,11 +215,11 @@ if __name__ == '__main__':
         # "ExpectedSarsa",
         # "OffPolicyNStepSarsaAgent n-3",
         # "NStepSarsaAgent n-3",
-        # "QL",
+        #"QL",
         "TB-1",
-        "TB-3",
+        "TB-5",
         "Q Sigma-n1",
         #"Q Sigma-n2",
-        "Q Sigma-n3",
+        "Q Sigma-n5",
     ]
     train_agents(agents, labels, runs, n_episodes, deserialize_values(name="frozen_lake_4by4_no_slippery"))

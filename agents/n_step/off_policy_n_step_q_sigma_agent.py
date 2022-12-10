@@ -6,17 +6,27 @@ from model.agent_config import AgentConfig
 
 class OffPolicyNStepQSigmaAgent(BaseAgent):
     def __init__(self, n_states, n_actions, config: AgentConfig, n_step_size=5, sigma=None, b_of_s=None,
-                 b_of_a_given_s=None):
+                 b_of_a_given_s=None, complete_recursion_with_q=False):
         super().__init__(config, f"OffPolicyNStepQSigmaAgent-n{n_step_size}")
         self.n_states = n_states
         self.n_actions = n_actions
         self.n_step_size = n_step_size
 
+        # in the book, the boxed algorithm omits the initial value of the G.
+        # Outside the box, the recursion conditions are given.
+        # Use of G_h:h = Q(S_h, A_h) is dictated.
+        # However, this setup behaves differently from TB algorithm
+        # if we consider that the Q(0) algorithm should behave like the TB algorithm.
+        # So by default we initialize G as it is done in the TB algorithm and experiments show that
+        # this way Q(0) behaves like TB.
+        # Set complete_recursion_with_q para to true to enforce use of Q value.
+        self.complete_recursion_with_q = complete_recursion_with_q
+
         self.Q = np.zeros((n_states, n_actions))
         if sigma is None:
             # self.sigma = np.ones(n_step_size + 1)  # full sampling
             self.sigma = np.zeros(n_step_size + 1)  # pure expectation
-            # self.sigma = np.full(n_step_size + 1, 0.25)  # in half way
+            # self.sigma = np.full(n_step_size + 1, 0.1)  # in half way
         else:
             self.sigma = np.array(sigma)
 
@@ -92,7 +102,39 @@ class OffPolicyNStepQSigmaAgent(BaseAgent):
     def update_tau(self, tau):
 
         if tau >= 0:
-            G = self.recur_g(tau, tau + self.n_step_size)
+            if self.t + 1 >= self.T:
+                G = self.observed_rewards[self.modded(self.T)]
+            else:
+                s_t_p_1 = self.observed_states[self.modded(self.t + 1)]
+                a_t_p_1 = self.selected_actions[self.modded(self.t + 1)]
+
+                if self.complete_recursion_with_q:
+                    G = self.Q[s_t_p_1, a_t_p_1]
+                else:
+                    G = self.observed_rewards[self.modded(self.t + 1)] + self.c.gamma * sum(
+                        [
+                            self.pi_a_s(a, s_t_p_1) * self.Q[s_t_p_1, a]
+                            for a in range(self.n_actions)
+                        ]
+                    )
+
+            for k in range(min(self.t, self.T - 1), tau, -1):  # tau + 1 + (-1) for a closed range
+
+                s_k = self.observed_states[self.modded(k)]
+
+                v_bar = sum([
+                    self.pi_a_s(a, s_k) *
+                    self.Q[s_k, a]
+                    for a in range(self.n_actions)
+                ])
+
+                a_k = self.selected_actions[self.modded(k)]
+
+                sigma_terms = (self.sigma[self.modded(k)] * self.rho[self.modded(k)] + (
+                        1 - self.sigma[self.modded(k)]) * self.pi_a_s(a_k, s_k))
+
+                G = self.observed_rewards[self.modded(k)] + self.c.gamma * sigma_terms * (
+                        G - self.Q[s_k, a_k]) + self.c.gamma * v_bar
 
             # add training error
             self.add_training_error(G, self.Q[

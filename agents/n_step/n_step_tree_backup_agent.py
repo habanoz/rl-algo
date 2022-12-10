@@ -11,6 +11,7 @@ class NStepTreeBackupAgent(BaseAgent):
         self.n_actions = n_actions
         self.n_step_size = n_step_size
 
+
         self.Q = np.zeros((n_states, n_actions))
 
         self.next_action = None
