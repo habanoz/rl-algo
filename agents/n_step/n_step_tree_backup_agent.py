@@ -5,8 +5,8 @@ from model.agent_config import AgentConfig
 
 
 class NStepTreeBackupAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, config: AgentConfig, n_step_size=5):
-        super().__init__(config)
+    def __init__(self, n_states, n_actions, config: AgentConfig, n_step_size=5, b_of_s=None):
+        super().__init__(config, f"NStepTreeBackupAgent-n{n_step_size}")
         self.n_states = n_states
         self.n_actions = n_actions
         self.n_step_size = n_step_size
@@ -20,6 +20,11 @@ class NStepTreeBackupAgent(BaseAgent):
         self.observed_states = None
         self.selected_actions = None
         self.observed_rewards = None
+
+        self.b_of_s = b_of_s
+        if self.b_of_s is None:
+            self.c.epsilon_decay = None  # epsilon should not decay, b is an exploratory policy
+            self.b_of_s = lambda s: self.epsilon_greedy_action_select(self.Q[s, :])
 
         self.reset_episode_data()
 
@@ -35,7 +40,7 @@ class NStepTreeBackupAgent(BaseAgent):
         if self.next_action is not None:
             return self.next_action
 
-        a0 = np.random.choice(self.n_actions)
+        a0 = self.b_of_s(state)
         self.observed_states[0] = state
         self.selected_actions[0] = a0
 
@@ -48,7 +53,7 @@ class NStepTreeBackupAgent(BaseAgent):
             self.observed_rewards[self.modded(self.t + 1)] = reward
             self.observed_states[self.modded(self.t + 1)] = next_state
 
-            self.next_action = np.random.choice(self.n_actions)
+            self.next_action = self.b_of_s(next_state)
             self.selected_actions[self.modded(self.t + 1)] = self.next_action
 
             if done:
