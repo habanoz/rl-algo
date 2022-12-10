@@ -397,8 +397,8 @@ def train_agents(agents, labels, runs: int, n_episodes: int, value_baseline: nda
 
 
 if __name__ == '__main__':
-    runs = 1
-    n_episodes = 3_000
+    runs = 10
+    n_episodes = 5_000
 
     # set render_mode to "Human" to
     env = gym.make('FrozenLake-v1', desc=None, map_name="4x4", is_slippery=False, render_mode=None)
@@ -406,7 +406,7 @@ if __name__ == '__main__':
     n_actions = env.action_space.n
 
     # cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.05, gamma=0.9)
-    cfg = AgentConfig(epsilon=0.4, epsilon_decay=None, min_epsilon=0.01, alpha=0.9, gamma=0.9)
+    cfg = AgentConfig(epsilon=0.4, epsilon_decay=None, min_epsilon=0.01, alpha=0.1, gamma=0.9)
 
     # generate_baseline(env, n_episodes=30_000, name="frozen_lake_4by4_no_slippery")
 
@@ -418,9 +418,11 @@ if __name__ == '__main__':
         # lambda: NStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3),
         # lambda: SarsaAgent(n_obs, n_actions, cfg),
         # lambda: QLearningAgent(n_obs, n_actions, cfg),
-        # lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=1),
-        # lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=3),
-        lambda: OffPolicyNStepQSigmaAgent(n_obs, n_actions, cfg, n_step_size=1)
+        lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=1),
+        lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=3),
+        lambda: OffPolicyNStepQSigmaAgent(n_obs, n_actions, cfg, n_step_size=1),
+        #lambda: OffPolicyNStepQSigmaAgent(n_obs, n_actions, cfg, n_step_size=2),
+        lambda: OffPolicyNStepQSigmaAgent(n_obs, n_actions, cfg, n_step_size=3),
     ]
 
     labels = [
@@ -430,8 +432,10 @@ if __name__ == '__main__':
         # "OffPolicyNStepSarsaAgent n-3",
         # "NStepSarsaAgent n-3",
         # "QL",
-        # "TB-1",
-        # "TB-3",
-        "Q Sigma-n1"
+        "TB-1",
+        "TB-3",
+        "Q Sigma-n1",
+        #"Q Sigma-n2",
+        "Q Sigma-n3",
     ]
     train_agents(agents, labels, runs, n_episodes, deserialize_values(name="frozen_lake_4by4_no_slippery"))
