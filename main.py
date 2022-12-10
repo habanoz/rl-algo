@@ -6,10 +6,13 @@ import numpy as np
 from numpy import ndarray
 from tqdm import tqdm
 
+from agents.frozen_lake_plotter import FrozenLakePlotter
 from agents.mc.off_policy_mc_agent import OffPolicyMcAgent
 from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
 from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
+from agents.n_step.n_step_tree_backup_agent import NStepTreeBackupAgent
 from agents.n_step.off_policy_n_step_q_sigma_agent import OffPolicyNStepQSigmaAgent
+from agents.n_step.off_policy_n_step_sarsa_agent import OffPolicyNStepSarsaAgent
 from agents.planning.tabular_dyna_q_agent import TabularDynaQAgent
 from agents.td.double_q_learning_agent import DoubleQLearningAgent
 from agents.td.q_learning_agent import QLearningAgent
@@ -90,6 +93,9 @@ def execute(agent_factory, env, n_runs=10, n_episodes=10_000, value_baseline=Non
 
         rms_errors += new_rms_errors
         training_errors += new_training_errors
+
+        if run == runs - 1:
+            FrozenLakePlotter(agent.Q, 4, 4, agent.get_desc()).show()
 
     rms_errors = rms_errors / runs
     training_errors = training_errors / runs
@@ -206,16 +212,16 @@ def train_4(n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseli
 def train_4_n_td(cfg: AgentConfig, n_obs: int, n_actions: int, runs: int, n_episodes: int,
                  value_baseline: ndarray = None):
     label1 = "sarsa"
-    label2 = "sarsa n-3"
+    label2 = "TB n-3"
     label3 = "off-MC"
-    label4 = "MC"
+    label4 = "Off Policy Sarsa n-3"
 
     # agent 1
     agent1 = lambda: SarsaAgent(n_obs, n_actions, cfg)
     stats1 = execute(agent1, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
     # agent 2
-    agent2 = lambda: NStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3)
+    agent2 = lambda: NStepTreeBackupAgent(n_obs, n_actions, cfg, n_step_size=3)
     stats2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
     # agent 3
@@ -224,7 +230,7 @@ def train_4_n_td(cfg: AgentConfig, n_obs: int, n_actions: int, runs: int, n_epis
 
     # agent 4
     # agent4 = lambda: OnPolicyFirstVisitMcAgent(n_obs, n_actions, cfg)
-    agent4 = lambda: NStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=4)
+    agent4 = lambda: OffPolicyNStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3)
     stats4 = execute(agent4, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
     fig, axs = plt.subplots(ncols=1, nrows=5, figsize=(20, 10))
@@ -270,31 +276,127 @@ def train_4_n_td(cfg: AgentConfig, n_obs: int, n_actions: int, runs: int, n_epis
     plt.show()
 
 
-def train_2(env, n_obs: int, n_actions: int, runs: int, n_episodes: int, value_baseline: ndarray = None):
-    label1 = "sarsa"
-    label2 = "sarsa n-1"
-    label3 = "sarsa n-2"
-    label4 = "sarsa n-3"
-
-    # cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.05, gamma=0.9)
-    cfg = AgentConfig(epsilon=.1, epsilon_decay=None, min_epsilon=0.01, alpha=0.05, gamma=0.9)
-    cfg.actions_to_take = [1, 1, 2, 1, 2, 3, 3, 3, 0, 0] * 2 + [1, 2]
-
-    # agent 2
-    agent2 = lambda: NStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=1)
-    stats2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
-
-    print("NStepSarsaAgent completed ************")
+def train_2_n_td(cfg: AgentConfig, n_obs: int, n_actions: int, runs: int, n_episodes: int,
+                 value_baseline: ndarray = None):
+    label1 = "QL"
+    label2 = "Off Policy Sarsa n-3"
 
     # agent 1
-    agent1 = lambda: SarsaAgent(n_obs, n_actions, cfg)
+    agent1 = lambda: QLearningAgent(n_obs, n_actions, cfg)
     stats1 = execute(agent1, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
 
-    print("SarsaAgent completed ************")
+    # agent 2
+    agent2 = lambda: OffPolicyNStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3)
+    stats2 = execute(agent2, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
+
+    fig, axs = plt.subplots(ncols=1, nrows=5, figsize=(20, 10))
+
+    x_ticks = range(len(stats1.rewards))
+
+    axs[0].set_title("Episode rewards")
+    axs[0].plot(x_ticks, stats1.rewards, label=label1)
+    axs[0].plot(x_ticks, stats2.rewards, label=label2)
+    axs[0].legend()
+
+    axs[1].set_title("Cumulative Rewards")
+    axs[1].plot(range(len(stats1.cum_rewards)), stats1.cum_rewards, label=label1)
+    axs[1].plot(range(len(stats2.cum_rewards)), stats2.cum_rewards, label=label2)
+    axs[1].legend()
+
+    axs[2].set_title("Episode Lengths")
+    axs[2].plot(x_ticks, stats1.lengths, label=label1)
+    axs[2].plot(x_ticks, stats2.lengths, label=label2)
+    axs[2].legend()
+
+    axs[3].set_title("RMS Errors")
+    axs[3].plot(x_ticks, stats1.value_errors, label=label1)
+    axs[3].plot(x_ticks, stats2.value_errors, label=label2)
+    axs[3].legend()
+
+    axs[4].set_title("Training Errors")
+    axs[4].plot(x_ticks, stats1.training_errors, label=label1)
+    axs[4].plot(x_ticks, stats2.training_errors, label=label2)
+    axs[4].legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
+def train_1(cfg: AgentConfig, n_obs: int, n_actions: int, runs: int, n_episodes: int,
+            value_baseline: ndarray = None):
+    label1 = "sarsa"
+
+    # agent 1
+    agent1 = lambda: OffPolicyNStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3)
+    stats1 = execute(agent1, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline)
+
+    fig, axs = plt.subplots(ncols=1, nrows=5, figsize=(20, 10))
+
+    x_ticks = range(len(stats1.rewards))
+
+    axs[0].set_title("Episode rewards")
+    axs[0].plot(x_ticks, stats1.rewards, label=label1)
+    axs[0].legend()
+
+    axs[1].set_title("Cumulative Rewards")
+    axs[1].plot(range(len(stats1.cum_rewards)), stats1.cum_rewards, label=label1)
+    axs[1].legend()
+
+    axs[2].set_title("Episode Lengths")
+    axs[2].plot(x_ticks, stats1.lengths, label=label1)
+    axs[2].legend()
+
+    axs[3].set_title("RMS Errors")
+    axs[3].plot(x_ticks, stats1.value_errors, label=label1)
+    axs[3].legend()
+
+    axs[4].set_title("Training Errors")
+    axs[4].plot(x_ticks, stats1.training_errors, label=label1)
+    axs[4].legend()
+
+    plt.tight_layout()
+    plt.show()
+
+
+def train_agents(agents, labels, runs: int, n_episodes: int, value_baseline: ndarray = None):
+    stats = []
+
+    for agent in agents:
+        stats.append(execute(agent, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline))
+
+    fig, axs = plt.subplots(ncols=1, nrows=5, figsize=(20, 10))
+
+    axs[0].set_title("Episode rewards")
+    for stat, label in zip(stats, labels):
+        axs[0].plot(range(len(stat.rewards)), stat.rewards, label=label)
+    axs[0].legend()
+
+    axs[1].set_title("Cumulative Rewards")
+    for stat, label in zip(stats, labels):
+        axs[1].plot(range(len(stat.cum_rewards)), stat.cum_rewards, label=label)
+    axs[1].legend()
+
+    axs[2].set_title("Episode Lengths")
+    for stat, label in zip(stats, labels):
+        axs[2].plot(range(len(stat.lengths)), stat.lengths, label=label)
+    axs[2].legend()
+
+    axs[3].set_title("RMS Errors")
+    for stat, label in zip(stats, labels):
+        axs[3].plot(range(len(stat.value_errors)), stat.value_errors, label=label)
+    axs[3].legend()
+
+    axs[4].set_title("Training Errors")
+    for stat, label in zip(stats, labels):
+        axs[4].plot(range(len(stat.training_errors)), stat.training_errors, label=label)
+    axs[4].legend()
+
+    plt.tight_layout()
+    plt.show()
 
 
 if __name__ == '__main__':
-    runs = 3
+    runs = 5
     n_episodes = 10_000
 
     # set render_mode to "Human" to
@@ -303,9 +405,23 @@ if __name__ == '__main__':
     n_actions = env.action_space.n
 
     # cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.05, gamma=0.9)
-    # cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.05, gamma=0.9)
-    cfg = AgentConfig(epsilon=0.1, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.3, gamma=0.9)
+    cfg = AgentConfig(epsilon=0.4, epsilon_decay=0.2 / n_episodes, min_epsilon=0.01, alpha=0.1, gamma=0.9)
 
     # generate_baseline(env, n_episodes=30_000, name="frozen_lake_4by4_no_slippery")
-    train_4_n_td(cfg, n_obs, n_actions, runs, n_episodes, deserialize_values(name="frozen_lake_4by4_no_slippery"))
-    # train_2(env, n_obs, n_actions, runs, n_episodes, deserialize_values(name="frozen_lake_4by4_no_slippery"))
+
+    agents = [
+        lambda: OffPolicyNStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=1),
+        lambda: NStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=1),
+        lambda: OffPolicyNStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3),
+        lambda: NStepSarsaAgent(n_obs, n_actions, cfg, n_step_size=3),
+        lambda: QLearningAgent(n_obs, n_actions, cfg),
+    ]
+
+    labels = [
+        "OffPolicyNStepSarsaAgent n-1",
+        "NStepSarsaAgent n-1",
+        "OffPolicyNStepSarsaAgent n-3",
+        "NStepSarsaAgent n-3",
+        "QL",
+    ]
+    train_agents(agents, labels, runs, n_episodes, deserialize_values(name="frozen_lake_4by4_no_slippery"))

@@ -6,7 +6,7 @@ from model.agent_config import AgentConfig
 
 class QLearningAgent(BaseAgent):
     def __init__(self, n_states, n_actions, config: AgentConfig):
-        super().__init__(config=config)
+        super().__init__(config=config, identifier="QLearningAgent")
         self.n_states = n_states
         self.n_actions = n_actions
 

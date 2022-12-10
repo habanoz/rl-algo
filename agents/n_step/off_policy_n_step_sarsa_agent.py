@@ -1,3 +1,5 @@
+from copy import copy
+
 from agents.base_agent import BaseAgent
 import numpy as np
 
@@ -5,13 +7,13 @@ from model.agent_config import AgentConfig
 
 
 class OffPolicyNStepSarsaAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, config: AgentConfig, n_step_size=5):
-        super().__init__(config)
+    def __init__(self, n_states, n_actions, config: AgentConfig, n_step_size=5, b_of_s=None, b_of_a_given_s=None):
+        super().__init__(copy(config), f"OffPolicyNStepSarsaAgent n{n_step_size}")
         self.n_states = n_states
         self.n_actions = n_actions
         self.n_step_size = n_step_size
 
-        self.Q = np.zeros((n_states, n_actions))
+        self.Q = np.full((n_states, n_actions), 0.0)
 
         self.next_action = None
         self.t = None
@@ -19,6 +21,16 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
         self.observed_states = None
         self.selected_actions = None
         self.observed_rewards = None
+
+        self.b_of_s = b_of_s
+        if self.b_of_s is None:
+            self.c.epsilon_decay = None  # epsilon should not decay, b is an exploratory policy
+            self.b_of_s = lambda s: self.epsilon_greedy_action_select(self.Q[s, :])
+
+        self.b_of_a_given_s = b_of_a_given_s
+        if self.b_of_a_given_s is None:
+            self.b_of_a_given_s = lambda a, s: ((1 - self.c.epsilon) + (self.c.epsilon / self.n_actions)) \
+                if self.greedy_action_select(self.Q[s, :]) == a else (self.c.epsilon / self.n_actions)
 
         self.reset_episode_data()
 
@@ -34,7 +46,7 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
         if self.next_action is not None:
             return self.next_action
 
-        a0 = np.random.choice(self.n_actions)
+        a0 = self.b_of_s(state)
         self.observed_states[0] = state
         self.selected_actions[0] = a0
 
@@ -47,7 +59,7 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
             self.observed_rewards[self.modded(self.t + 1)] = reward
             self.observed_states[self.modded(self.t + 1)] = next_state
 
-            self.next_action = np.random.choice(self.n_actions)
+            self.next_action = self.b_of_s(next_state)
             self.selected_actions[self.modded(self.t + 1)] = self.next_action
 
             if done:
@@ -68,9 +80,14 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
 
         if tau >= 0:
             rho = np.prod([
-                self.pi_ai_si(i) / (1 / self.n_actions)
+                self.pi_ai_si(i) /
+                self.b_of_a_given_s(self.selected_actions[self.modded(i)], self.observed_states[self.modded(i)])
                 for i in range(tau + 1, min(tau + self.n_step_size - 1, self.T - 1) + 1)
             ])
+
+            # rho = max(rho, 0.1)
+
+            # rho = 1
 
             G = sum([
                 pow(self.c.gamma, i - tau - 1) * self.observed_rewards[self.modded(i)]

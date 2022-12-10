@@ -8,8 +8,8 @@ from transition import Transition
 
 
 class OffPolicyMcAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, config: AgentConfig, b_of_s=None, b_of_a_given_s=None, ):
-        super().__init__(copy(config))
+    def __init__(self, n_states, n_actions, config: AgentConfig, b_of_s=None, b_of_a_given_s=None):
+        super().__init__(copy(config), "OffPolicyMcAgent")
         self.n_states = n_states
         self.n_actions = n_actions
 

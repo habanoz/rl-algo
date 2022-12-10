@@ -6,8 +6,10 @@ from model.agent_config import AgentConfig
 
 
 class BaseAgent(ABC):
-    def __init__(self, config: AgentConfig):
+    def __init__(self, config: AgentConfig, identifier=None):
         self.c = config
+        self.identifier = identifier
+        
         self._incremental_training_error = 0
         self._n_incremental_training_errors = 0
         self.total_training_error = 0
@@ -15,6 +17,9 @@ class BaseAgent(ABC):
         self.actions_to_take = None
         if config.actions_to_take is not None and len(config.actions_to_take) > 0:
             self.actions_to_take = list(config.actions_to_take)
+
+    def get_desc(self):
+        return self.identifier
 
     def get_action(self, obs):
         pass
@@ -49,7 +54,7 @@ class BaseAgent(ABC):
             return self.greedy_action_select(nd_array1_q)
 
     def add_training_error(self, new_estimate, old_estimate):
-        #self._incremental_training_error += pow(new_estimate - old_estimate, 2)
+        # self._incremental_training_error += pow(new_estimate - old_estimate, 2)
         self._incremental_training_error += abs(new_estimate - old_estimate)
         self._n_incremental_training_errors += 1
 

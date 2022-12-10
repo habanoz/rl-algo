@@ -6,7 +6,7 @@ from model.agent_config import AgentConfig
 
 class NStepSarsaAgent(BaseAgent):
     def __init__(self, n_states, n_actions, config: AgentConfig, n_step_size=5):
-        super().__init__(config)
+        super().__init__(config,f"NStepSarsaAgent n-{n_step_size}")
         self.n_states = n_states
         self.n_actions = n_actions
         self.n_step_size = n_step_size
