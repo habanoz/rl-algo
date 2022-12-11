@@ -8,7 +8,8 @@ from agents.td.double_q_learning_agent import DoubleQLearningAgent
 from agents.td.q_learning_agent import QLearningAgent
 from agents.td.sarsa_agent import SarsaAgent
 from agents.wappers.state_wrapper_agent import StateWrapperAgent
-from demo.sab.blackjack.blackjack_state_flattener import BlackjackStateFlattener
+from demo.sab.blackjack.blackjack_state_flattener import BlackjackStateFlattener, N_DEALER_STATES, N_PLAYER_STATES, \
+    N_ACE_STATES
 from model.agent_config import AgentConfig
 from plot.grid_state_value_plotter import BlackjackStatePlotter
 
@@ -18,14 +19,18 @@ def train(env: Env, agent: AAgent, n_episodes):
     ace = 0
     for episode in tqdm(range(n_episodes)):
         c, a = play(agent, env)
-        cnt+=c
-        ace+=a
+        cnt += c
+        ace += a
 
-    print(ace/cnt)
+    print(ace / cnt)
 
 
 def play(agent, env):
     s = env.reset()[0]  # (20,1,False)
+    p, _, _ = s
+    while p < 12:
+        s = env.reset()[0]
+        p, _, _ = s
 
     done = False
 
@@ -51,14 +56,13 @@ def play(agent, env):
 
 def start():
     env = gym.make("Blackjack-v1", sab=True)
-    n_episodes = 35_000
+    n_episodes = 75_000
     cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01)
-    # agent = OnPolicyFirstVisitMcAgent(220, 2, cfg)
-    agent = SarsaAgent(10*2*22, 2, cfg)
+    agent = DoubleQLearningAgent(N_DEALER_STATES * N_PLAYER_STATES * N_ACE_STATES, 2, cfg)
     flattener = BlackjackStateFlattener()
     agentw = StateWrapperAgent(agent, flattener)
 
-    plotter = BlackjackStatePlotter("Blackjack", 2, 2, (20, 10))
+    plotter = BlackjackStatePlotter("Blackjack", 2, 2)
 
     train(env, agentw, 10_000)
     state_grid = agentw.state_values()

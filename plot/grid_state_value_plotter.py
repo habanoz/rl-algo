@@ -5,10 +5,12 @@ from matplotlib.patches import Patch
 from mpl_toolkits.mplot3d import Axes3D
 from numpy import ndarray
 
+from demo.sab.blackjack.blackjack_state_flattener import MIN_PLAYER_SUM, MIN_DEALER_CARD
+
 
 class BlackjackStatePlotter:
 
-    def __init__(self, title: str, n_rows, n_cols, size):
+    def __init__(self, title: str, n_rows, n_cols):
         self.n_cols = n_cols
         self.n_rows = n_rows
         # self.fig, self.axs = plt.subplots(ncols=n_cols, nrows=n_rows, figsize=size)
@@ -23,7 +25,7 @@ class BlackjackStatePlotter:
         )
 
         value = np.apply_along_axis(
-            lambda obs: state_values_array2d[obs[0] - 1, obs[1] - 1],
+            lambda obs: state_values_array2d[obs[0] - MIN_PLAYER_SUM, obs[1] - MIN_DEALER_CARD],
             axis=2,
             arr=np.dstack([player_count, dealer_count]),
         )
@@ -31,7 +33,7 @@ class BlackjackStatePlotter:
         value_grid = player_count, dealer_count, value
 
         policy_grid = np.apply_along_axis(
-            lambda obs: policy_array2d[obs[0] - 1, obs[1] - 1],
+            lambda obs: policy_array2d[obs[0] - MIN_PLAYER_SUM, obs[1] - MIN_DEALER_CARD],
             axis=2,
             arr=np.dstack([player_count, dealer_count]),
         )

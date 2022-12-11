@@ -3,8 +3,8 @@ from numpy import ndarray
 
 from agents.wappers.state_coder import StateFlattener
 
-MIN_PLAYER_SUM = 1
-N_PLAYER_STATES = 21 + 1  # + a terminal state
+MIN_PLAYER_SUM = 12
+N_PLAYER_STATES = 10 + 1  # + a terminal state
 MIN_DEALER_CARD = 1
 N_DEALER_STATES = 10
 N_ACE_STATES = 2
