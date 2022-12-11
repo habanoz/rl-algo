@@ -25,4 +25,7 @@ class QLearningAgent(BaseAgent):
         super().update(state, action, reward, done, next_state)
 
     def state_values(self):
-        return np.array([np.mean(r) for r in self.Q])
+        return np.array([np.max(r) for r in self.Q])
+
+    def action_values(self):
+        return self.Q

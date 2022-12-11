@@ -23,7 +23,7 @@ class BlackjackStatePlotter:
         )
 
         value = np.apply_along_axis(
-            lambda obs: state_values_array2d[obs[0] - 12, obs[1] - 1],
+            lambda obs: state_values_array2d[obs[0] - 1, obs[1] - 1],
             axis=2,
             arr=np.dstack([player_count, dealer_count]),
         )
@@ -31,7 +31,7 @@ class BlackjackStatePlotter:
         value_grid = player_count, dealer_count, value
 
         policy_grid = np.apply_along_axis(
-            lambda obs: policy_array2d[obs[0] - 12, obs[1] - 1],
+            lambda obs: policy_array2d[obs[0] - 1, obs[1] - 1],
             axis=2,
             arr=np.dstack([player_count, dealer_count]),
         )
@@ -86,12 +86,14 @@ class BlackjackStatePlotter:
 
         # plot the policy
         self.fig.add_subplot(2, 4, 2*idx + 2)
-        ax2 = sns.heatmap(policy_grid, linewidth=0, annot=True, cmap="Accent_r", cbar=False)
+        ax2 = sns.heatmap(np.transpose(policy_grid), linewidth=0, annot=True, cmap="Accent_r", cbar=False)
         ax2.set_title(f"Policy: {title}")
-        ax2.set_xlabel("Player sum")
-        ax2.set_ylabel("Dealer showing")
-        ax2.set_xticklabels(range(12, 22))
-        ax2.set_yticklabels(["A"] + list(range(2, 11)), fontsize=12)
+        ax2.set_ylabel("Player sum")
+        ax2.set_xlabel("Dealer showing")
+        ax2.set_yticklabels(range(12, 22))
+        ax2.set_xticklabels(["A"] + list(range(2, 11)), fontsize=12)
+
+        ax2.invert_yaxis()
 
         # add a legend
         legend_elements = [

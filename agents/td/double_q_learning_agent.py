@@ -39,3 +39,6 @@ class DoubleQLearningAgent(BaseAgent):
 
     def state_values(self):
         return np.array([np.mean((r1 + r2) / 2) for r1, r2 in zip(self.Q1, self.Q2)])
+
+    def action_values(self):
+        return (self.Q1 + self.Q2) / 2

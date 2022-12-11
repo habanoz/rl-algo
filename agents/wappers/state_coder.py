@@ -7,10 +7,6 @@ class StateFlattener(ABC):
         pass
 
     @abstractmethod
-    def deflatten(self, state):
-        pass
-
-    @abstractmethod
     def deflatten_state_values(self, flat_state_values):
         pass
 

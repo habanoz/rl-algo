@@ -63,7 +63,7 @@ class OnPolicyFirstVisitMcAgent(BaseAgent):
                         self.pi[st, a] = self.c.epsilon / self.n_actions
 
     def state_values(self):
-        return np.array([np.mean(r) for r in self.Q])
+        return np.array([np.max(r) for r in self.Q])
 
     def action_values(self):
         return self.Q

@@ -5,6 +5,8 @@ from model.agent_config import AgentConfig
 
 
 class SarsaAgent(BaseAgent):
+
+
     def __init__(self, n_states, n_actions, config: AgentConfig):
         super().__init__(config,"SarsaAgent")
         self.n_states = n_states
@@ -34,3 +36,6 @@ class SarsaAgent(BaseAgent):
 
     def state_values(self):
         return np.array([np.mean(r) for r in self.Q])
+
+    def action_values(self):
+        return self.Q
