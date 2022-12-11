@@ -1,23 +1,13 @@
-import os
-
 import gymnasium as gym
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy import ndarray
 from tqdm import tqdm
 
-from agents.frozen_lake_plotter import FrozenLakePlotter
-from agents.mc.off_policy_mc_agent import OffPolicyMcAgent
+from plot.frozen_lake_plotter import FrozenLakePlotter
 from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
-from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
 from agents.n_step.n_step_tree_backup_agent import NStepTreeBackupAgent
 from agents.n_step.off_policy_n_step_q_sigma_agent import OffPolicyNStepQSigmaAgent
-from agents.n_step.off_policy_n_step_sarsa_agent import OffPolicyNStepSarsaAgent
-from agents.planning.tabular_dyna_q_agent import TabularDynaQAgent
-from agents.td.double_q_learning_agent import DoubleQLearningAgent
-from agents.td.expected_sarsa_agent import ExpectedSarsaAgent
-from agents.td.q_learning_agent import QLearningAgent
-from agents.td.sarsa_agent import SarsaAgent
 from episodes_stats import EpisodesStats
 from model.agent_config import AgentConfig
 from model.episode_stats_wrapper import EpisodeStatsWrapper

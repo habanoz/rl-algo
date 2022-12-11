@@ -2,10 +2,11 @@ from abc import ABC, abstractmethod
 
 import numpy as np
 
+from agents.a_agent import AAgent
 from model.agent_config import AgentConfig
 
 
-class BaseAgent(ABC):
+class BaseAgent(AAgent, ABC):
     def __init__(self, config: AgentConfig, identifier=None):
         self.c = config
         self.identifier = identifier
@@ -65,3 +66,6 @@ class BaseAgent(ABC):
     @abstractmethod
     def state_values(self):
         raise Exception("Not implemented")
+
+    def get_policy(self):
+        return np.array( np.argmax(r) for r in self.action_values())

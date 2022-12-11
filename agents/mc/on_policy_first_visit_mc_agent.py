@@ -7,6 +7,7 @@ import numpy as np
 
 
 class OnPolicyFirstVisitMcAgent(BaseAgent):
+
     def __init__(self, n_states, n_actions, config: AgentConfig):
         super().__init__(config)
         self.n_states = n_states
@@ -63,3 +64,6 @@ class OnPolicyFirstVisitMcAgent(BaseAgent):
 
     def state_values(self):
         return np.array([np.mean(r) for r in self.Q])
+
+    def action_values(self):
+        return self.Q
