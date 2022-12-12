@@ -14,13 +14,13 @@ class OnPolicyFirstVisitMcAgent(BaseAgent):
         self.n_actions = n_actions
 
         self.transitions = []
-        self.returns = defaultdict(list)
+        self.return_sums = defaultdict(float)
+        self.return_counts = defaultdict(lambda: 1)
         self.visits = set()
         self.Q = np.zeros((n_states, n_actions))
-        self.pi = np.full((n_states, n_actions), max(self.c.epsilon / n_actions, 1 / n_actions))  # epsilon soft-policy
 
     def get_action(self, state):
-        return np.random.choice(np.arange(self.n_actions), p=self.pi[state, :])
+        return self.epsilon_greedy_action_select(self.Q[state, :])
 
     def update(self, state, action, reward, terminated, next_state):
         first_visit = (state, action) not in self.visits
@@ -36,6 +36,7 @@ class OnPolicyFirstVisitMcAgent(BaseAgent):
 
     def do_episode_ended(self):
         self.do_reverse_transition_loop(self.transitions)
+        self.do_after_episode()
         self.visits = set()
         self.transitions = []
 
@@ -48,19 +49,12 @@ class OnPolicyFirstVisitMcAgent(BaseAgent):
 
             if first_visit:
                 # record training error
-                if len(self.returns[(st, at)]) > 0:
-                    self.add_training_error(G, np.mean(self.returns[(st, at)]))
+                self.add_training_error(G - self.return_sums[(st, at)] / self.return_counts[(st, at)])
 
-                self.returns[(st, at)].append(G)
-                self.Q[st, at] = np.mean(self.returns[(st, at)])
+                self.return_sums[(st, at)] = self.return_sums[(st, at)] + G
+                self.return_counts[(st, at)] = self.return_counts[(st, at)] + 1
 
-                a_star = self.greedy_action_select(self.Q[st, :])
-
-                for a in range(self.n_actions):
-                    if a == a_star:
-                        self.pi[st, a] = 1 - self.c.epsilon + self.c.epsilon / self.n_actions
-                    else:
-                        self.pi[st, a] = self.c.epsilon / self.n_actions
+                self.Q[st, at] = self.return_sums[(st, at)] / self.return_counts[(st, at)]
 
     def state_values(self):
         return np.array([np.max(r) for r in self.Q])

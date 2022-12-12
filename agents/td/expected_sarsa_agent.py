@@ -5,6 +5,7 @@ from model.agent_config import AgentConfig
 
 
 class ExpectedSarsaAgent(BaseAgent):
+
     def __init__(self, n_states, n_actions, config: AgentConfig):
         super().__init__(config=config, identifier="ExpectedSarsaAgent")
         self.n_states = n_states
@@ -16,15 +17,17 @@ class ExpectedSarsaAgent(BaseAgent):
         return self.epsilon_greedy_action_select(self.Q[state, :])
 
     def update(self, state, action, reward, done, next_state):
-        new_estimate = reward + self.c.gamma * sum(
+        expected_next_q_value = 0 if done else sum(
             [self.pi_at_st(a, next_state) * self.Q[next_state, a]
              for a in range(self.n_actions)]
         )
 
-        # add training error
-        self.add_training_error(new_estimate, self.Q[state, action])
+        td_error = reward + self.c.gamma * expected_next_q_value - self.Q[state, action]
 
-        self.Q[state, action] += self.c.alpha * (new_estimate - self.Q[state, action])
+        # add training error
+        self.add_training_error(td_error)
+
+        self.Q[state, action] += self.c.alpha * td_error
 
         super().update(state, action, reward, done, next_state)
 
@@ -33,3 +36,6 @@ class ExpectedSarsaAgent(BaseAgent):
 
     def state_values(self):
         return np.array([np.mean(r) for r in self.Q])
+
+    def action_values(self):
+        return self.Q

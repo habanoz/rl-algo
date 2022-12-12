@@ -16,11 +16,13 @@ class QLearningAgent(BaseAgent):
         return self.epsilon_greedy_action_select(self.Q[state, :])
 
     def update(self, state, action, reward, done, next_state):
-        # add training error
-        self.add_training_error(reward + self.c.gamma * max(self.Q[next_state, :]), self.Q[state, action])
+        next_q_value = 0 if done else max(self.Q[next_state, :])
+        td_error = (reward + self.c.gamma * next_q_value - self.Q[state, action])
 
-        self.Q[state, action] += self.c.alpha * (
-                reward + self.c.gamma * max(self.Q[next_state, :]) - self.Q[state, action])
+        # add training error
+        self.add_training_error(td_error)
+
+        self.Q[state, action] += self.c.alpha * td_error
 
         super().update(state, action, reward, done, next_state)
 

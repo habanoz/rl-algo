@@ -58,9 +58,9 @@ class BaseAgent(AAgent, ABC):
         else:
             return self.greedy_action_select(nd_array1_q)
 
-    def add_training_error(self, new_estimate, old_estimate):
+    def add_training_error(self, error):
         # self._incremental_training_error += pow(new_estimate - old_estimate, 2)
-        self._incremental_training_error += abs(new_estimate - old_estimate)
+        self._incremental_training_error += abs(error)
         self._n_incremental_training_errors += 1
 
     @abstractmethod

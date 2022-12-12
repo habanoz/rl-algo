@@ -4,8 +4,11 @@ from pandas._libs.parsers import defaultdict
 import numpy as np
 import gymnasium as gym
 
+from agents.a_agent import AAgent
 
-class BlackjackAgent:
+
+class BlackjackAgent(AAgent):
+
     def __init__(
             self,
             learning_rate: float,
@@ -38,7 +41,7 @@ class BlackjackAgent:
 
         self.training_error = []
 
-    def get_action(self, obs: tuple[int, int, bool]) -> int:
+    def get_action(self, obs) -> int:
         """
         Returns the best action with probability (1 - epsilon)
         otherwise a random action with probability epsilon to ensure exploration.
@@ -53,11 +56,11 @@ class BlackjackAgent:
 
     def update(
             self,
-            obs: tuple[int, int, bool],
+            obs,
             action: int,
             reward: float,
             terminated: bool,
-            next_obs: tuple[int, int, bool],
+            next_obs,
     ):
         """Updates the Q-value of an action."""
         future_q_value = (not terminated) * np.max(self.q_values[next_obs])
@@ -70,5 +73,25 @@ class BlackjackAgent:
         )
         self.training_error.append(temporal_difference)
 
+        if terminated:
+            self.decay_epsilon()
+
     def decay_epsilon(self):
         self.epsilon = max(self.final_epsilon, self.epsilon - self.epsilon_decay)
+
+    def state_values(self):
+        state_value = defaultdict(float)
+        for obs, action_values in self.q_values.items():
+            state_value[obs] = float(np.max(action_values))
+
+        return state_value
+
+    def action_values(self):
+        raise Exception("not implemented")
+
+    def get_policy(self):
+        policy = defaultdict(int)
+        for obs, action_values in self.q_values.items():
+            policy[obs] = int(np.argmax(action_values))
+
+        return policy

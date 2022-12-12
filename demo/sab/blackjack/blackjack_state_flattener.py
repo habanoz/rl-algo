@@ -4,7 +4,7 @@ from numpy import ndarray
 from agents.wappers.state_coder import StateFlattener
 
 MIN_PLAYER_SUM = 12
-N_PLAYER_STATES = 10 + 1  # + a terminal state
+N_PLAYER_STATES = 10
 MIN_DEALER_CARD = 1
 N_DEALER_STATES = 10
 N_ACE_STATES = 2
@@ -13,7 +13,8 @@ N_ACTIONS = 2
 
 class BlackjackStateFlattener(StateFlattener):
     def __init__(self):
-        self.numbers = set()
+        self.coverage = set()
+        self.ace_sums = set()
 
     def flatten(self, obs):
         aligned_obs = self._zero_align(obs)
@@ -23,16 +24,22 @@ class BlackjackStateFlattener(StateFlattener):
         player_sum, dealer_showing, usable_ace = obs
         s = (player_sum * N_DEALER_STATES + dealer_showing) * N_ACE_STATES + usable_ace
 
-        self.numbers.add(s)
+        self.coverage.add(s)
 
         return s
 
     def _zero_align(self, obs):
         player_sum, dealer_showing, usable_ace = obs
+
+        if int(usable_ace) == 1:
+            self.ace_sums.add(player_sum)
+
         player_sum = player_sum - MIN_PLAYER_SUM
 
-        if player_sum > 10:
-            player_sum = 10
+        assert player_sum >= 0
+
+        if player_sum > N_PLAYER_STATES:
+            player_sum = N_PLAYER_STATES
 
         return player_sum, dealer_showing - MIN_DEALER_CARD, int(usable_ace)
 

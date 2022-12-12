@@ -4,9 +4,6 @@ from tqdm import tqdm
 
 from agents.a_agent import AAgent
 from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
-from agents.td.double_q_learning_agent import DoubleQLearningAgent
-from agents.td.q_learning_agent import QLearningAgent
-from agents.td.sarsa_agent import SarsaAgent
 from agents.wappers.state_wrapper_agent import StateWrapperAgent
 from demo.sab.blackjack.blackjack_state_flattener import BlackjackStateFlattener, N_DEALER_STATES, N_PLAYER_STATES, \
     N_ACE_STATES
@@ -56,9 +53,9 @@ def play(agent, env):
 
 def start():
     env = gym.make("Blackjack-v1", sab=True)
-    n_episodes = 75_000
-    cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01)
-    agent = DoubleQLearningAgent(N_DEALER_STATES * N_PLAYER_STATES * N_ACE_STATES, 2, cfg)
+    n_episodes = 551_000
+    cfg = AgentConfig(epsilon=0.1, epsilon_decay=None, min_epsilon=0, gamma=1.0, alpha=0.01)
+    agent = OnPolicyFirstVisitMcAgent(N_DEALER_STATES * N_PLAYER_STATES * N_ACE_STATES, 2, cfg)
     flattener = BlackjackStateFlattener()
     agentw = StateWrapperAgent(agent, flattener)
 
@@ -78,7 +75,8 @@ def start():
     plotter.create_plot(state_grid[:, :, 1], policy_grid[:, :, 1], f"{n_episodes} steps(Usable Ace)", 1)
     plotter.create_plot(state_grid[:, :, 0], policy_grid[:, :, 0], f"{n_episodes} steps(No Usable Ace)", 3)
 
-    print(flattener.numbers)
+    print(flattener.coverage)
+    print(flattener.ace_sums)
 
     plotter.show()
 
