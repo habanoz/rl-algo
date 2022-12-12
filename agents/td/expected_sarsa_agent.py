@@ -1,20 +1,15 @@
 from agents.base_agent import BaseAgent
 import numpy as np
 
-from model.agent_config import AgentConfig
+from model.agent_training_config import AgentTrainingConfig
 
 
 class ExpectedSarsaAgent(BaseAgent):
 
-    def __init__(self, n_states, n_actions, config: AgentConfig):
-        super().__init__(config=config, identifier="ExpectedSarsaAgent")
-        self.n_states = n_states
-        self.n_actions = n_actions
+    def __init__(self, n_states, n_actions, config: AgentTrainingConfig):
+        super().__init__(config, n_actions, n_states, "ExpectedSarsaAgent")
 
         self.Q = np.zeros((n_states, n_actions))
-
-    def get_action(self, state):
-        return self.epsilon_greedy_action_select(self.Q[state, :])
 
     def update(self, state, action, reward, done, next_state):
         expected_next_q_value = 0 if done else sum(
@@ -32,10 +27,7 @@ class ExpectedSarsaAgent(BaseAgent):
         super().update(state, action, reward, done, next_state)
 
     def pi_at_st(self, at, st):
-        return 1 if at == self.greedy_action_select(self.Q[st, :]) else 0
-
-    def state_values(self):
-        return np.array([np.mean(r) for r in self.Q])
+        return 1 if at == self.greedy_action_select(st) else 0
 
     def action_values(self):
         return self.Q

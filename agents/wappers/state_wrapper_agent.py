@@ -17,8 +17,12 @@ class StateWrapperAgent(AAgent):
 
         return self.delegate.update(s, action, reward, done, sp)
 
-    def state_values(self):
-        states = self.delegate.state_values()
+    def state_values_max(self):
+        states = self.delegate.state_values_max()
+        return self.flattener.deflatten_state_values(states)
+
+    def state_values_mean(self):
+        states = self.delegate.state_values_mean()
         return self.flattener.deflatten_state_values(states)
 
     def action_values(self):
@@ -28,4 +32,3 @@ class StateWrapperAgent(AAgent):
     def get_policy(self):
         action_values = self.delegate.action_values()
         return self.flattener.deflatten_policy(action_values)
-

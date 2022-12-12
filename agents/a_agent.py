@@ -12,7 +12,11 @@ class AAgent(ABC):
         pass
 
     @abstractmethod
-    def state_values(self):
+    def state_values_mean(self):
+        pass
+
+    @abstractmethod
+    def state_values_max(self):
         pass
 
     @abstractmethod

@@ -1,11 +1,11 @@
 from agents.base_agent import BaseAgent
 import numpy as np
 
-from model.agent_config import AgentConfig
+from model.agent_training_config import AgentTrainingConfig
 
 
 class OffPolicyNStepQSigmaAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, config: AgentConfig, n_step_size=5, sigma=None, b_of_s=None,
+    def __init__(self, n_states, n_actions, config: AgentTrainingConfig, n_step_size=5, sigma=None, b_of_s=None,
                  b_of_a_given_s=None, complete_recursion_with_q=False):
         super().__init__(config, f"OffPolicyNStepQSigmaAgent-n{n_step_size}")
         self.n_states = n_states
@@ -49,7 +49,7 @@ class OffPolicyNStepQSigmaAgent(BaseAgent):
         self.b_of_a_given_s = b_of_a_given_s
         if self.b_of_a_given_s is None:
             self.b_of_a_given_s = lambda a, s: ((1 - self.c.epsilon) + (self.c.epsilon / self.n_actions)) \
-                if self.greedy_action_select(self.Q[s, :]) == a else (self.c.epsilon / self.n_actions)
+                if greedy_action_select(self.Q[s, :]) == a else (self.c.epsilon / self.n_actions)
 
         self.reset_episode_data()
 
@@ -181,7 +181,7 @@ class OffPolicyNStepQSigmaAgent(BaseAgent):
         return idx % (self.n_step_size + 1)
 
     def pi_a_s(self, a, s):
-        return 1 if a == self.greedy_action_select(self.Q[s, :]) else 0
+        return 1 if a == greedy_action_select(self.Q[s, :]) else 0
 
     def state_values(self):
         return np.array([np.mean(r) for r in self.Q])

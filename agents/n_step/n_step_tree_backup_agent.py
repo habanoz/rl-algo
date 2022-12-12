@@ -1,11 +1,11 @@
 from agents.base_agent import BaseAgent
 import numpy as np
 
-from model.agent_config import AgentConfig
+from model.agent_training_config import AgentTrainingConfig
 
 
 class NStepTreeBackupAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, config: AgentConfig, n_step_size=5, b_of_s=None):
+    def __init__(self, n_states, n_actions, config: AgentTrainingConfig, n_step_size=5, b_of_s=None):
         super().__init__(config, f"NStepTreeBackupAgent-n{n_step_size}")
         self.n_states = n_states
         self.n_actions = n_actions
@@ -117,7 +117,7 @@ class NStepTreeBackupAgent(BaseAgent):
         return idx % (self.n_step_size + 1)
 
     def pi_a_st(self, a, t):
-        return 1 if a == self.greedy_action_select(
+        return 1 if a == greedy_action_select(
             self.Q[self.observed_states[self.modded(t)], :]) else 0
 
     def state_values(self):

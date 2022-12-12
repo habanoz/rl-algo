@@ -1,11 +1,11 @@
 from agents.base_agent import BaseAgent
 import numpy as np
 
-from model.agent_config import AgentConfig
+from model.agent_training_config import AgentTrainingConfig
 
 
 class NStepSarsaAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, config: AgentConfig, n_step_size=5):
+    def __init__(self, n_states, n_actions, config: AgentTrainingConfig, n_step_size=5):
         super().__init__(config,f"NStepSarsaAgent n-{n_step_size}")
         self.n_states = n_states
         self.n_actions = n_actions

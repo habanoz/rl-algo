@@ -9,8 +9,8 @@ from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
 from agents.n_step.n_step_tree_backup_agent import NStepTreeBackupAgent
 from agents.n_step.off_policy_n_step_q_sigma_agent import OffPolicyNStepQSigmaAgent
 from episodes_stats import EpisodesStats
-from model.agent_config import AgentConfig
-from model.episode_stats_wrapper import EpisodeStatsWrapper
+from model.agent_training_config import AgentTrainingConfig
+from env.episode_stats_wrapper import EpisodeStatsWrapper
 from rms_errors_for_baseline import RMSErrorsForBaseline
 from util.serialize_helper import serialize_values, deserialize_values
 
@@ -180,7 +180,7 @@ if __name__ == '__main__':
     n_actions = env.action_space.n
 
     # cfg = AgentConfig(epsilon=1.0, epsilon_decay=0.99 / n_episodes, min_epsilon=0.01, alpha=0.05, gamma=0.9)
-    cfg = AgentConfig(epsilon=0.5, epsilon_decay=None, min_epsilon=0.01, alpha=0.1, gamma=0.9)
+    cfg = AgentTrainingConfig(epsilon=0.5, epsilon_decay=None, min_epsilon=0.01, alpha=0.1, gamma=0.9)
 
     # generate_baseline(env, n_episodes=30_000, name="frozen_lake_4by4_no_slippery")
 

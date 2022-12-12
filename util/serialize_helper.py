@@ -1,6 +1,5 @@
 import numpy as np
 from numpy import ndarray
-import io
 
 
 def serialize_values(v: ndarray, name: str):

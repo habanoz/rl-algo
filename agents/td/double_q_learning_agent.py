@@ -3,24 +3,22 @@ import numpy.random
 from agents.base_agent import BaseAgent
 import numpy as np
 
-from model.agent_config import AgentConfig
+from model.agent_training_config import AgentTrainingConfig
 
 
 class DoubleQLearningAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, config: AgentConfig):
-        super().__init__(config)
-        self.n_states = n_states
-        self.n_actions = n_actions
+    def __init__(self, n_states, n_actions, config: AgentTrainingConfig):
+        super().__init__(config, n_actions, n_states, "DoubleQLearningAgent")
 
         self.Q1 = np.zeros((n_states, n_actions))
         self.Q2 = np.zeros((n_states, n_actions))
 
     def get_action(self, state):
-        return self.epsilon_greedy_action_select(self.Q1[state, :] + self.Q2[state, :])
+        return self.epsilon_greedy_action_select_merged(state)
 
     def update(self, state, action, reward, done, next_state):
         if numpy.random.binomial(1, 0.5) == 1:
-            next_q_value = 0 if done else self.Q2[next_state, self.greedy_action_select(self.Q1[next_state, :])]
+            next_q_value = 0 if done else self.Q2[next_state, self.greedy_action_select_q1(next_state)]
             td_error = reward + self.c.gamma * next_q_value - self.Q1[state, action]
 
             # add training error
@@ -28,7 +26,7 @@ class DoubleQLearningAgent(BaseAgent):
 
             self.Q1[state, action] += self.c.alpha * td_error
         else:
-            next_q_value = 0 if done else self.Q1[next_state, self.greedy_action_select(self.Q2[next_state, :])]
+            next_q_value = 0 if done else self.Q1[next_state, self.greedy_action_select_q2(next_state)]
             td_error = reward + self.c.gamma * next_q_value - self.Q2[state, action]
 
             # add training error
@@ -38,8 +36,22 @@ class DoubleQLearningAgent(BaseAgent):
 
         super().update(state, action, reward, done, next_state)
 
-    def state_values(self):
-        return np.array([np.mean((r1 + r2) / 2) for r1, r2 in zip(self.Q1, self.Q2)])
-
     def action_values(self):
         return (self.Q1 + self.Q2) / 2
+
+    def greedy_action_select_q1(self, state):
+        q_values = self.Q1[state]
+        max_val = np.max(q_values)
+        return np.random.choice(np.where(q_values == max_val)[0])
+
+    def greedy_action_select_q2(self, state):
+        q_values = self.Q2[state]
+        max_val = np.max(q_values)
+        return np.random.choice(np.where(q_values == max_val)[0])
+
+    def epsilon_greedy_action_select_merged(self, state):
+        if np.random.binomial(1, self.c.epsilon) == 1:
+            return np.random.choice(self.n_actions)
+        else:
+            merged_q_values = self.Q1[state, :] + self.Q2[state, :]
+            return self.greedy_action_select_q_values(merged_q_values)

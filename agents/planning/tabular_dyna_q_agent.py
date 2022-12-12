@@ -1,11 +1,11 @@
 import numpy as np
 
 from agents.base_agent import BaseAgent
-from model.agent_config import AgentConfig
+from model.agent_training_config import AgentTrainingConfig
 
 
 class TabularDynaQAgent(BaseAgent):
-    def __init__(self, n_obs, n_actions, config: AgentConfig, n_planning_steps=10):
+    def __init__(self, n_obs, n_actions, config: AgentTrainingConfig, n_planning_steps=10):
         super().__init__(config)
 
         self.Q = np.zeros((n_obs, n_actions))

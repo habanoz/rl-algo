@@ -1,15 +1,17 @@
-from abc import ABC, abstractmethod
+from abc import ABC
 
 import numpy as np
 
 from agents.a_agent import AAgent
-from model.agent_config import AgentConfig
+from model.agent_training_config import AgentTrainingConfig
 
 
 class BaseAgent(AAgent, ABC):
-    def __init__(self, config: AgentConfig, identifier=None):
+    def __init__(self, config: AgentTrainingConfig, n_actions, n_states, identifier=None):
         self.c = config
         self.identifier = identifier
+        self.n_actions = n_actions
+        self.n_states = n_states
 
         self._incremental_training_error = 0
         self._n_incremental_training_errors = 0
@@ -23,10 +25,9 @@ class BaseAgent(AAgent, ABC):
         return self.identifier
 
     def get_action(self, obs):
-        pass
+        return self.epsilon_greedy_action_select(obs)
 
     def update(self, state, action, reward, done, next_state):
-        # print(f"state:{state} action:{action} reward:{reward} next_state:{next_state} done:{done}")
 
         if done:
             self.do_after_episode()
@@ -35,37 +36,42 @@ class BaseAgent(AAgent, ABC):
         if self.c.epsilon_decay is not None and self.c.epsilon_decay > 0:
             self.c.epsilon = max(self.c.epsilon - self.c.epsilon_decay, self.c.min_epsilon, 0.0)
 
-        # self.total_training_error = np.sqrt(self._incremental_training_error / max(self._n_incremental_training_errors, 1))
         self.total_training_error = self._incremental_training_error / max(self._n_incremental_training_errors, 1)
         self._incremental_training_error = 0
         self._n_incremental_training_errors = 0
 
-    def greedy_action_select(self, nd_array1):
-        max_val = np.max(nd_array1)
-        return np.random.choice(np.where(nd_array1 == max_val)[0])
-
-    def greedy_action_set(self, nd_array1):
-        max_val = np.max(nd_array1)
-        return np.where(nd_array1 == max_val)[0]
-
-    def epsilon_greedy_action_select(self, nd_array1_q):
+    def epsilon_greedy_action_select(self, state):
         # this is for debugging. Return one of the predefined actions, if defined...
         if self.actions_to_take is not None and len(self.actions_to_take) > 0:
             return self.actions_to_take.pop(0)
 
         if np.random.binomial(1, self.c.epsilon) == 1:
-            return np.random.choice(len(nd_array1_q))
+            return np.random.choice(self.n_actions)
         else:
-            return self.greedy_action_select(nd_array1_q)
+            return self.greedy_action_select(state)
+
+    def greedy_action_select(self, state):
+        q_values = self.action_values()[state]
+        return self.greedy_action_select_q_values(q_values)
+
+    def greedy_action_select_q_values(self, q_values):
+        max_val = np.max(q_values)
+        return np.random.choice(np.where(q_values == max_val)[0])
+
+    def greedy_action_set(self, state):
+        q_values = self.action_values()[state]
+        max_val = np.max(q_values)
+        return np.where(q_values == max_val)[0]
 
     def add_training_error(self, error):
-        # self._incremental_training_error += pow(new_estimate - old_estimate, 2)
         self._incremental_training_error += abs(error)
         self._n_incremental_training_errors += 1
 
-    @abstractmethod
-    def state_values(self):
-        raise Exception("Not implemented")
+    def state_values_mean(self):
+        return np.array([np.mean(r) for r in self.action_values()])
+
+    def state_values_max(self):
+        return np.array([np.max(r) for r in self.action_values()])
 
     def get_policy(self):
-        return np.array( np.argmax(r) for r in self.action_values())
+        return np.array(np.argmax(r) for r in self.action_values())

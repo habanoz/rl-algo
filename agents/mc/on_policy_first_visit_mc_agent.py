@@ -1,17 +1,14 @@
 from collections import defaultdict
 
 from agents.base_agent import BaseAgent
-from model.agent_config import AgentConfig
-from transition import Transition
+from model.agent_training_config import AgentTrainingConfig
 import numpy as np
 
 
 class OnPolicyFirstVisitMcAgent(BaseAgent):
 
-    def __init__(self, n_states, n_actions, config: AgentConfig):
-        super().__init__(config)
-        self.n_states = n_states
-        self.n_actions = n_actions
+    def __init__(self, n_states, n_actions, config: AgentTrainingConfig):
+        super().__init__(config, n_actions, n_states, "OnPolicyFirstVisitMcAgent")
 
         self.transitions = []
         self.return_sums = defaultdict(float)
@@ -19,15 +16,12 @@ class OnPolicyFirstVisitMcAgent(BaseAgent):
         self.visits = set()
         self.Q = np.zeros((n_states, n_actions))
 
-    def get_action(self, state):
-        return self.epsilon_greedy_action_select(self.Q[state, :])
-
     def update(self, state, action, reward, terminated, next_state):
         first_visit = (state, action) not in self.visits
         if not first_visit:
             self.visits.add((state, action))
 
-        self.transitions.append(Transition(state, action, reward, next_state, first_visit))
+        self.transitions.append((state, action, reward, next_state, first_visit))
 
         if terminated:
             self.do_episode_ended()
@@ -43,7 +37,7 @@ class OnPolicyFirstVisitMcAgent(BaseAgent):
     def do_reverse_transition_loop(self, transitions):
         G = 0
         for t in reversed(transitions):
-            (st, at, rt, ns, first_visit) = t.to_tuple()
+            st, at, rt, ns, first_visit = t
 
             G = self.c.gamma * G + rt
 
@@ -55,9 +49,6 @@ class OnPolicyFirstVisitMcAgent(BaseAgent):
                 self.return_counts[(st, at)] = self.return_counts[(st, at)] + 1
 
                 self.Q[st, at] = self.return_sums[(st, at)] / self.return_counts[(st, at)]
-
-    def state_values(self):
-        return np.array([np.max(r) for r in self.Q])
 
     def action_values(self):
         return self.Q

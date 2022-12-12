@@ -13,9 +13,8 @@ class BlackjackStatePlotter:
     def __init__(self, title: str, n_rows, n_cols):
         self.n_cols = n_cols
         self.n_rows = n_rows
-        # self.fig, self.axs = plt.subplots(ncols=n_cols, nrows=n_rows, figsize=size)
 
-        self.fig = plt.figure(figsize=plt.figaspect(0.4))
+        self.fig = plt.figure(figsize=plt.figaspect(1))
         self.fig.suptitle(title, fontsize=16)
 
     def _create_grid(self, state_values_array2d, policy_array2d):
@@ -44,13 +43,13 @@ class BlackjackStatePlotter:
         plt.tight_layout()
         plt.show()
 
-    def create_plot(self, state_values_array2d: ndarray, policy_array2d:ndarray, title: str, idx=0):
+    def create_plot(self, state_values_array2d: ndarray, policy_array2d: ndarray, title: str, idx=0):
         """Creates a plot using a value and policy grid."""
 
         value_grid, policy_grid = self._create_grid(state_values_array2d, policy_array2d)
         player_count, dealer_count, value = value_grid
 
-        ax1 = self.fig.add_subplot(2, 4, 2*idx + 1, projection="3d")
+        ax1 = self.fig.add_subplot(self.n_rows, self.n_cols * 2, 2 * idx + 1, projection="3d")
         surf = ax1.plot_surface(
             player_count,
             dealer_count,
@@ -83,11 +82,10 @@ class BlackjackStatePlotter:
         ax1.view_init(45, 220)
         ax1.legend()
 
-        # Add a color bar which maps values to colors.
         self.fig.colorbar(surf, shrink=0.5, aspect=5)
 
         # plot the policy
-        self.fig.add_subplot(2, 4, 2*idx + 2)
+        self.fig.add_subplot(self.n_rows, self.n_cols * 2, 2 * idx + 2)
         ax2 = sns.heatmap(np.transpose(policy_grid), linewidth=0, annot=True, cmap="Accent_r", cbar=False)
         ax2.set_title(f"Policy: {title}")
         ax2.set_ylabel("Player sum")
@@ -103,37 +101,3 @@ class BlackjackStatePlotter:
             Patch(facecolor="grey", edgecolor="black", label="Stick"),
         ]
         ax2.legend(handles=legend_elements, bbox_to_anchor=(1.3, 1))
-
-        # # ax = self.axs.flat[idx]
-        # ax = self.fig.add_subplot(self.n_rows, self.n_cols, idx + 1, projection="3d")
-        # # ax1 = fig.add_subplot(1, 2, 1, projection="3d")
-        # ax.plot_surface(
-        #     player_count,
-        #     dealer_count,
-        #     value,
-        #     rstride=1,
-        #     cstride=1,
-        #     cmap="viridis",
-        #     edgecolor="none",
-        # )
-        # # plt.yticks(range(12, 22), range(12, 22))
-        # # plt.xticks(range(1, 11), ["A"] + list(range(2, 11)))
-        # ax.set_title(f"State values: {title}")
-        # ax.set_ylabel("Player sum")
-        # ax.set_xlabel("Dealer showing")
-        # ax.zaxis.set_rotate_label(False)
-        # ax.set_zlabel("Value", fontsize=14, rotation=90)
-        # ax.view_init(20, 220)
-
-        #
-        # # plot the policy
-        # # self.fig.add_subplot((self.n_rows, self.n_cols, pos))
-        # ax = self.axs.flat[idx]
-        # ax = sns.heatmap(grid, linewidth=0, annot=True, cmap="cool", ax=ax, cbar=False)
-        # ax.set_title(title)
-        # ax.set_xlabel("Dealer showing")
-        # ax.set_ylabel("Player sum")
-        # ax.set_xticklabels(["A", "2", "3", "4", "5", "6", "7", "8", "9", "10"])
-        # ax.set_yticklabels(["12", "13", "14", "15", "16", "17", "18", "19", "20", "21"])
-
-        # ax.legend()
