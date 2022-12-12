@@ -2,13 +2,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from tqdm import tqdm
 
-from EpisodeStatsWrapper import EpisodeStatsWrapper
 from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
 from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
-from agents.n_step.n_step_tree_backup_agent import NStepTreeBackupAgent
-from agents.n_step.off_policy_n_step_sarsa_agent import OffPolicyNStepSarsaAgent
 from agents.td.q_learning_agent import QLearningAgent
-from env.random_walk_env import RandomWalkEnv
+from env.episode_stats_wrapper import EpisodeStatsWrapper
+from env.random_walk19_env import RandomWalk19Env
 
 
 def generate_episodes(env, agent, n_episodes=1000):
@@ -79,7 +77,7 @@ def start():
     runs = 1
     n_episodes = 20_000
 
-    env = RandomWalkEnv()
+    env = RandomWalk19Env()
     n_obs = env.observation_space.n
     n_actions = env.action_space.n
 

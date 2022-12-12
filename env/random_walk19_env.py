@@ -5,7 +5,7 @@ from gymnasium import spaces
 START_STATE = 10
 
 
-class RandomWalkEnv(gym.Env):
+class RandomWalk19Env(gym.Env):
 
     def __init__(self):
         self.observation_space = spaces.Discrete(21)

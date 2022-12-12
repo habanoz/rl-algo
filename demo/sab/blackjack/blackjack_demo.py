@@ -9,6 +9,7 @@ from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
 from agents.n_step.n_step_tree_backup_agent import NStepTreeBackupAgent
 from agents.n_step.off_policy_n_step_q_sigma_agent import OffPolicyNStepQSigmaAgent
 from agents.n_step.off_policy_n_step_sarsa_agent import OffPolicyNStepSarsaAgent
+from agents.planning.tabular_dyna_q_agent import TabularDynaQAgent
 from agents.td.double_q_learning_agent import DoubleQLearningAgent
 from agents.td.expected_sarsa_agent import ExpectedSarsaAgent
 from agents.td.q_learning_agent import QLearningAgent
@@ -47,9 +48,9 @@ def play(agent, env):
 
 def start():
     env = gym.make("Blackjack-v1", sab=True)
-    n_episodes = 6_000_000
-    cfg = AgentTrainingConfig(epsilon=0.5, epsilon_decay=0.5/(n_episodes/2), min_epsilon=0.01, gamma=1.0, alpha=0.001)
-    agent = OnPolicyFirstVisitMcAgent(N_DEALER_STATES * N_PLAYER_STATES * N_ACE_STATES, 2, cfg)
+    n_episodes = 150_000
+    cfg = AgentTrainingConfig(epsilon=0.5, epsilon_decay=0.5/(n_episodes/2), min_epsilon=0.01, gamma=1.0, alpha=0.01)
+    agent = TabularDynaQAgent(N_DEALER_STATES * N_PLAYER_STATES * N_ACE_STATES, 2, cfg)
     flattener = BlackjackStateFlattener()
     agentw = StateWrapperAgent(agent, flattener)
 
@@ -65,8 +66,8 @@ def start():
     print(flattener.coverage)
     print(flattener.ace_sums)
 
-    #plotter.show()
-    plotter.save("blackjack-MC-6_000_000")
+    plotter.show()
+    #plotter.save("blackjack-MC-6_000_000")
 
 
 if __name__ == '__main__':
