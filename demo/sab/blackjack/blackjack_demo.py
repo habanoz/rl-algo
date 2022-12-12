@@ -47,13 +47,13 @@ def play(agent, env):
 
 def start():
     env = gym.make("Blackjack-v1", sab=True)
-    n_episodes = 150_000
-    cfg = AgentTrainingConfig(epsilon=0.1, epsilon_decay=None, min_epsilon=0, gamma=1.0, alpha=0.01)
-    agent = OffPolicyNStepSarsaAgent(N_DEALER_STATES * N_PLAYER_STATES * N_ACE_STATES, 2, cfg, n_step_size=2)
+    n_episodes = 200_000
+    cfg = AgentTrainingConfig(epsilon=0.3, epsilon_decay=0.3/(n_episodes/2), min_epsilon=0, gamma=1.0, alpha=0.01)
+    agent = OffPolicyNStepQSigmaAgent(N_DEALER_STATES * N_PLAYER_STATES * N_ACE_STATES, 2, cfg, n_step_size=2)
     flattener = BlackjackStateFlattener()
     agentw = StateWrapperAgent(agent, flattener)
 
-    plotter = BlackjackStatePlotter("Blackjack", 2, 1)
+    plotter = BlackjackStatePlotter("Blackjack-Q(0)-N2", 2, 1)
 
     train(env, agentw, n_episodes)
     state_grid = agentw.state_values_max()
@@ -65,7 +65,8 @@ def start():
     print(flattener.coverage)
     print(flattener.ace_sums)
 
-    plotter.show()
+    #plotter.show()
+    plotter.save("blackjack-Q0N2-200000")
 
 
 if __name__ == '__main__':

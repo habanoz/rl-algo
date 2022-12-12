@@ -14,7 +14,7 @@ class BlackjackStatePlotter:
         self.n_cols = n_cols
         self.n_rows = n_rows
 
-        self.fig = plt.figure(figsize=plt.figaspect(1))
+        self.fig = plt.figure(figsize=(10,10))
         self.fig.suptitle(title, fontsize=16)
 
     def _create_grid(self, state_values_array2d, policy_array2d):
@@ -40,8 +40,12 @@ class BlackjackStatePlotter:
         return value_grid, policy_grid
 
     def show(self):
-        plt.tight_layout()
+        #plt.tight_layout()
         plt.show()
+
+    def save(self, name):
+
+        plt.savefig(f'../../../images/figure_{name}.png')
 
     def create_plot(self, state_values_array2d: ndarray, policy_array2d: ndarray, title: str, idx=0):
         """Creates a plot using a value and policy grid."""
