@@ -1,16 +1,16 @@
 from copy import copy
 
-from agents.base_agent import BaseAgent
 import numpy as np
 
+from agents.base_agent import BaseAgent
 from model.agent_training_config import AgentTrainingConfig
 
 
 class OffPolicyNStepSarsaAgent(BaseAgent):
-    def __init__(self, n_states, n_actions, config: AgentTrainingConfig, n_step_size=5, b_of_s=None, b_of_a_given_s=None):
-        super().__init__(copy(config), f"OffPolicyNStepSarsaAgent n{n_step_size}")
-        self.n_states = n_states
-        self.n_actions = n_actions
+    def __init__(self, n_states, n_actions, config: AgentTrainingConfig, n_step_size=5, b_of_s=None,
+                 b_of_a_given_s=None):
+        super().__init__(copy(config), n_actions, n_states, f"OffPolicyNStepSarsaAgent n{n_step_size}")
+
         self.n_step_size = n_step_size
 
         self.Q = np.full((n_states, n_actions), 0.0)
@@ -25,12 +25,12 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
         self.b_of_s = b_of_s
         if self.b_of_s is None:
             self.c.epsilon_decay = None  # epsilon should not decay, b is an exploratory policy
-            self.b_of_s = lambda s: self.epsilon_greedy_action_select(self.Q[s, :])
+            self.b_of_s = lambda s: self.epsilon_greedy_action_select(s)
 
         self.b_of_a_given_s = b_of_a_given_s
         if self.b_of_a_given_s is None:
             self.b_of_a_given_s = lambda a, s: ((1 - self.c.epsilon) + (self.c.epsilon / self.n_actions)) \
-                if greedy_action_select(self.Q[s, :]) == a else (self.c.epsilon / self.n_actions)
+                if self.greedy_action_select(s) == a else (self.c.epsilon / self.n_actions)
 
         self.reset_episode_data()
 
@@ -57,13 +57,18 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
 
         if self.t < self.T:
             self.observed_rewards[self.modded(self.t + 1)] = reward
-            self.observed_states[self.modded(self.t + 1)] = next_state
 
-            self.next_action = self.b_of_s(next_state)
-            self.selected_actions[self.modded(self.t + 1)] = self.next_action
+            if not done:
+                self.observed_states[self.modded(self.t + 1)] = next_state
+                self.next_action = self.b_of_s(next_state)
+                self.selected_actions[self.modded(self.t + 1)] = self.next_action
 
-            if done:
+            else:
                 self.T = self.t + 1
+
+                self.observed_states[self.modded(self.t + 1)] = -1
+                self.next_action = None
+                self.selected_actions[self.modded(self.t + 1)] = -1
 
         tau = self.t - self.n_step_size + 1
         self.update_tau(tau)
@@ -85,10 +90,6 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
                 for i in range(tau + 1, min(tau + self.n_step_size - 1, self.T - 1) + 1)
             ])
 
-            # rho = max(rho, 0.1)
-
-            # rho = 1
-
             G = sum([
                 pow(self.c.gamma, i - tau - 1) * self.observed_rewards[self.modded(i)]
                 for i in range(tau + 1, min(tau + self.n_step_size, self.T) + 1)
@@ -100,29 +101,26 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
                     self.selected_actions[self.modded(tau + self.n_step_size)]
                 ]
 
+            td_error = G - self.Q[self.observed_states[self.modded(tau)], self.selected_actions[self.modded(tau)]]
+
             # add training error
-            self.add_training_error(G, self.Q[
-                self.observed_states[self.modded(tau)],
-                self.selected_actions[self.modded(tau)]
-            ])
+            self.add_training_error(td_error)
 
             self.Q[
                 self.observed_states[self.modded(tau)],
                 self.selected_actions[self.modded(tau)]
             ] += self.c.alpha * rho * (
-                    G -
-                    self.Q[
-                        self.observed_states[self.modded(tau)],
-                        self.selected_actions[self.modded(tau)]
-                    ]
+                td_error
             )
 
     def modded(self, idx):
         return idx % (self.n_step_size + 1)
 
     def pi_ai_si(self, i):
-        return 1 if self.selected_actions[self.modded(i)] == self.greedy_action_select(
-            self.Q[self.observed_states[self.modded(i)], :]) else 0
+        s_i = self.observed_states[self.modded(i)]
+        a_i = self.selected_actions[self.modded(i)]
 
-    def state_values(self):
-        return np.array([np.mean(r) for r in self.Q])
+        return 1 if a_i == self.greedy_action_select(s_i) else 0
+
+    def action_values(self):
+        return self.Q

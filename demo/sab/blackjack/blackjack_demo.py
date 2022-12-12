@@ -5,6 +5,10 @@ from tqdm import tqdm
 from agents.a_agent import AAgent
 from agents.mc.off_policy_mc_agent import OffPolicyMcAgent
 from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
+from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
+from agents.n_step.n_step_tree_backup_agent import NStepTreeBackupAgent
+from agents.n_step.off_policy_n_step_q_sigma_agent import OffPolicyNStepQSigmaAgent
+from agents.n_step.off_policy_n_step_sarsa_agent import OffPolicyNStepSarsaAgent
 from agents.td.double_q_learning_agent import DoubleQLearningAgent
 from agents.td.expected_sarsa_agent import ExpectedSarsaAgent
 from agents.td.q_learning_agent import QLearningAgent
@@ -43,9 +47,9 @@ def play(agent, env):
 
 def start():
     env = gym.make("Blackjack-v1", sab=True)
-    n_episodes = 15_000
+    n_episodes = 150_000
     cfg = AgentTrainingConfig(epsilon=0.1, epsilon_decay=None, min_epsilon=0, gamma=1.0, alpha=0.01)
-    agent = OffPolicyMcAgent(N_DEALER_STATES * N_PLAYER_STATES * N_ACE_STATES, 2, cfg)
+    agent = OffPolicyNStepSarsaAgent(N_DEALER_STATES * N_PLAYER_STATES * N_ACE_STATES, 2, cfg, n_step_size=2)
     flattener = BlackjackStateFlattener()
     agentw = StateWrapperAgent(agent, flattener)
 

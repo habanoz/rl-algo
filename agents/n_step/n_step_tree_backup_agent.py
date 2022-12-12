@@ -1,3 +1,5 @@
+from copy import copy
+
 from agents.base_agent import BaseAgent
 import numpy as np
 
@@ -6,11 +8,8 @@ from model.agent_training_config import AgentTrainingConfig
 
 class NStepTreeBackupAgent(BaseAgent):
     def __init__(self, n_states, n_actions, config: AgentTrainingConfig, n_step_size=5, b_of_s=None):
-        super().__init__(config, f"NStepTreeBackupAgent-n{n_step_size}")
-        self.n_states = n_states
-        self.n_actions = n_actions
+        super().__init__(copy(config), n_actions, n_states, f"NStepTreeBackupAgent-n{n_step_size}")
         self.n_step_size = n_step_size
-
 
         self.Q = np.zeros((n_states, n_actions))
 
@@ -25,7 +24,7 @@ class NStepTreeBackupAgent(BaseAgent):
         self.b_of_s = b_of_s
         if self.b_of_s is None:
             self.c.epsilon_decay = None  # epsilon should not decay, b is an exploratory policy
-            self.b_of_s = lambda s: self.epsilon_greedy_action_select(self.Q[s, :])
+            self.b_of_s = lambda s: self.epsilon_greedy_action_select(s)
 
         self.reset_episode_data()
 
@@ -52,13 +51,18 @@ class NStepTreeBackupAgent(BaseAgent):
 
         if self.t < self.T:
             self.observed_rewards[self.modded(self.t + 1)] = reward
-            self.observed_states[self.modded(self.t + 1)] = next_state
 
-            self.next_action = self.b_of_s(next_state)
-            self.selected_actions[self.modded(self.t + 1)] = self.next_action
+            if not done:
+                self.observed_states[self.modded(self.t + 1)] = next_state
+                self.next_action = self.b_of_s(next_state)
+                self.selected_actions[self.modded(self.t + 1)] = self.next_action
 
-            if done:
+            else:
                 self.T = self.t + 1
+
+                self.observed_states[self.modded(self.t + 1)] = -1
+                self.next_action = None
+                self.selected_actions[self.modded(self.t + 1)] = -1
 
         tau = self.t - self.n_step_size + 1
         self.update_tau(tau)
@@ -79,46 +83,43 @@ class NStepTreeBackupAgent(BaseAgent):
             if self.t + 1 >= self.T:
                 G = self.observed_rewards[self.modded(self.T)]
             else:
+                s_t_plus_1 = self.observed_states[self.modded(self.t + 1)]
                 G = self.observed_rewards[self.modded(self.t + 1)] + self.c.gamma * sum(
                     [
-                        self.pi_a_st(a, self.t + 1) * self.Q[self.observed_states[self.modded(self.t + 1)], a]
+                        self.pi_a_s(a, s_t_plus_1) * self.Q[s_t_plus_1, a]
                         for a in range(self.n_actions)
                     ]
                 )
 
             for k in range(min(self.t, self.T - 1), tau, -1):  # tau + 1 + (-1) for a closed range
                 ak = self.selected_actions[self.modded(k)]
+                sk = self.observed_states[self.modded(k)]
 
                 G = self.observed_rewards[self.modded(k)] + self.c.gamma * sum(
                     [
-                        self.pi_a_st(a, k) * self.Q[self.observed_states[self.modded(k)], a]
+                        self.pi_a_s(a, sk) * self.Q[sk, a]
                         for a in range(self.n_actions) if a != ak
                     ]
-                ) + self.c.gamma * self.pi_a_st(ak, k) * G
+                ) + self.c.gamma * self.pi_a_s(ak, sk) * G
+
+            td_error = (G - self.Q[self.observed_states[self.modded(tau)], self.selected_actions[self.modded(tau)]])
 
             # add training error
-            self.add_training_error(G, self.Q[
-                self.observed_states[self.modded(tau)],
-                self.selected_actions[self.modded(tau)]
-            ])
+            self.add_training_error(td_error)
 
             self.Q[
                 self.observed_states[self.modded(tau)],
                 self.selected_actions[self.modded(tau)]
-            ] += self.c.alpha * (
-                    G -
-                    self.Q[
-                        self.observed_states[self.modded(tau)],
-                        self.selected_actions[self.modded(tau)]
-                    ]
-            )
+            ] += self.c.alpha * td_error
 
     def modded(self, idx):
         return idx % (self.n_step_size + 1)
 
-    def pi_a_st(self, a, t):
-        return 1 if a == greedy_action_select(
-            self.Q[self.observed_states[self.modded(t)], :]) else 0
+    def pi_a_s(self, a, s):
+        return 1 if a == self.greedy_action_select(s) else 0
 
     def state_values(self):
         return np.array([np.mean(r) for r in self.Q])
+
+    def action_values(self):
+        return self.Q

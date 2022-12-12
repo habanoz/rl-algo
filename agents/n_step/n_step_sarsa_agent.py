@@ -6,9 +6,8 @@ from model.agent_training_config import AgentTrainingConfig
 
 class NStepSarsaAgent(BaseAgent):
     def __init__(self, n_states, n_actions, config: AgentTrainingConfig, n_step_size=5):
-        super().__init__(config,f"NStepSarsaAgent n-{n_step_size}")
-        self.n_states = n_states
-        self.n_actions = n_actions
+        super().__init__(config, n_actions, n_states, f"NStepSarsaAgent n-{n_step_size}")
+
         self.n_step_size = n_step_size
 
         self.Q = np.zeros((n_states, n_actions))
@@ -34,7 +33,7 @@ class NStepSarsaAgent(BaseAgent):
         if self.next_action is not None:
             return self.next_action
 
-        a0 = self.epsilon_greedy_action_select(self.Q[state, :])
+        a0 = self.epsilon_greedy_action_select(state)
         self.observed_states[0] = state
         self.selected_actions[0] = a0
 
@@ -45,13 +44,18 @@ class NStepSarsaAgent(BaseAgent):
 
         if self.t < self.T:
             self.observed_rewards[self.modded(self.t + 1)] = reward
-            self.observed_states[self.modded(self.t + 1)] = next_state
 
-            self.next_action = self.epsilon_greedy_action_select(self.Q[next_state, :])
-            self.selected_actions[self.modded(self.t + 1)] = self.next_action
+            if not done:
+                self.observed_states[self.modded(self.t + 1)] = next_state
+                self.next_action = self.epsilon_greedy_action_select(next_state)
+                self.selected_actions[self.modded(self.t + 1)] = self.next_action
 
-            if done:
+            else:
                 self.T = self.t + 1
+
+                self.observed_states[self.modded(self.t + 1)] = -1
+                self.next_action = None
+                self.selected_actions[self.modded(self.t + 1)] = -1
 
         tau = self.t - self.n_step_size + 1
         self.update_tau(tau)
@@ -78,25 +82,18 @@ class NStepSarsaAgent(BaseAgent):
                     self.selected_actions[self.modded(tau + self.n_step_size)]
                 ]
 
+            td_error = G - self.Q[self.observed_states[self.modded(tau)], self.selected_actions[self.modded(tau)]]
+
             # add training error
-            self.add_training_error(G, self.Q[
-                self.observed_states[self.modded(tau)],
-                self.selected_actions[self.modded(tau)]
-            ])
+            self.add_training_error(td_error)
 
             self.Q[
                 self.observed_states[self.modded(tau)],
                 self.selected_actions[self.modded(tau)]
-            ] += self.c.alpha * (
-                    G -
-                    self.Q[
-                        self.observed_states[self.modded(tau)],
-                        self.selected_actions[self.modded(tau)]
-                    ]
-            )
+            ] += self.c.alpha * td_error
 
     def modded(self, idx):
         return idx % (self.n_step_size + 1)
 
-    def state_values(self):
-        return np.array([np.mean(r) for r in self.Q])
+    def action_values(self):
+        return self.Q
