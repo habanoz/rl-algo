@@ -1,4 +1,5 @@
 from abc import ABC
+from copy import copy
 
 import numpy as np
 
@@ -8,7 +9,7 @@ from model.agent_training_config import AgentTrainingConfig
 
 class BaseAgent(AAgent, ABC):
     def __init__(self, config: AgentTrainingConfig, n_actions, n_states, identifier=None):
-        self.c = config
+        self.c = copy(config)
         self.identifier = identifier
         self.n_actions = n_actions
         self.n_states = n_states

@@ -54,12 +54,11 @@ def start():
     n_episodes = 10_000
     env = gym.make('MountainCar-v0')
     cfg = AgentTrainingConfig(epsilon=0, gamma=1.0, alpha=0.1)
-    speed_scale = 8 / (0.6 + 1.2)
-    velocity_scale = 8 / (0.07 + 0.07)
+    n_tilings = 8
+    speed_scale = n_tilings / (0.6 + 1.2)
+    velocity_scale = n_tilings / (0.07 + 0.07)
 
-    agent = EpisodicSemiGradientSarsaAgent(cfg, 3, 4096, np.array([speed_scale, velocity_scale]), 8)
-
-    # train(n_episodes, env, agent)
+    agent = EpisodicSemiGradientSarsaAgent(cfg, 3, 2048, np.array([speed_scale, velocity_scale]), n_tilings)
 
     plot_episodes = [0, 99, 999, n_episodes - 1]
     fig = plt.figure(figsize=(40, 10))
@@ -70,7 +69,7 @@ def start():
         if ep in plot_episodes:
             print_cost(agent, ep, axes[plot_episodes.index(ep)])
 
-    # plt.savefig('../../../images/figure_mountaincar_sarsa_10_0000.png')
+    # plt.savefig('../../../images/figure_10.1.png')
     plt.show()
     plt.close()
 

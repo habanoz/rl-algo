@@ -7,8 +7,8 @@ from model.agent_training_config import AgentTrainingConfig
 from util.tiles import IHT, tiles
 
 
-class EpisodicSemiGradientSarsaAgent(BaseAgent):
-    def __init__(self, config: AgentTrainingConfig, n_actions, n_states, state_scale, num_of_tilings=8):
+class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
+    def __init__(self, config: AgentTrainingConfig, n_actions, n_states, state_scale, num_of_tilings=8, n_steps=5):
         super().__init__(config, n_actions, n_states, "EpisodicSemiGradientSarsaAgent")
 
         self.num_of_tilings = num_of_tilings
@@ -20,6 +20,7 @@ class EpisodicSemiGradientSarsaAgent(BaseAgent):
         self.w = np.zeros(n_states)
 
         self.state_scale = state_scale
+        self.n_steps = n_steps
 
     def get_action(self, obs):
         if self.next_action is not None:
