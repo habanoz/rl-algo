@@ -6,9 +6,9 @@ from model.agent_training_config import AgentTrainingConfig
 from util.tiles import IHT, tiles
 
 
-class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
+class DifferentialSemiGradientNStepSarsaAgent(BaseAgent):
     def __init__(self, config: AgentTrainingConfig, n_actions, n_states, state_scale, num_of_tilings=8, n_step_size=5):
-        super().__init__(config, n_actions, n_states, f"EpisodicSemiGradientNStepSarsaAgent n{n_step_size}")
+        super().__init__(config, n_actions, n_states, "DifferentialSemiGradientNStepSarsaAgent")
 
         self.num_of_tilings = num_of_tilings
         self.c.alpha /= self.num_of_tilings
@@ -16,13 +16,13 @@ class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
         self.iht = IHT(n_states)
 
         self.w = np.zeros(n_states)
+        self.r_bar = 0.0
 
         self.state_scale = state_scale
         self.n_step_size = n_step_size
 
         self.next_action = None
         self.t = None
-        self.T = None
         self.observed_states = None
         self.selected_actions = None
         self.observed_rewards = None
@@ -32,7 +32,6 @@ class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
     def reset_episode_data(self):
         self.next_action = None
         self.t = -1
-        self.T = float("inf")
         self.observed_states = np.empty(self.n_step_size + 1, dtype=ndarray)
         self.selected_actions = np.empty(self.n_step_size + 1, dtype=int)
         self.observed_rewards = np.empty(self.n_step_size + 1, dtype=int)
@@ -49,29 +48,25 @@ class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
         return a0
 
     def update(self, state, action, reward, done, next_state):
-
         self.t += 1
 
-        if self.t < self.T:
-            self.observed_rewards[self.modded(self.t + 1)] = reward
+        self.observed_rewards[self.modded(self.t + 1)] = reward
 
-            if not done:
-                self.observed_states[self.modded(self.t + 1)] = next_state
-                self.next_action = self.epsilon_greedy_action_select_q_values(next_state)
-                self.selected_actions[self.modded(self.t + 1)] = self.next_action
+        if not done:
+            self.observed_states[self.modded(self.t + 1)] = next_state
+            self.next_action = self.epsilon_greedy_action_select_q_values(next_state)
+            self.selected_actions[self.modded(self.t + 1)] = self.next_action
 
-            else:
-                self.T = self.t + 1
-
-                self.observed_states[self.modded(self.t + 1)] = None
-                self.next_action = None
-                self.selected_actions[self.modded(self.t + 1)] = -1
+        else:
+            self.observed_states[self.modded(self.t + 1)] = None
+            self.next_action = None
+            self.selected_actions[self.modded(self.t + 1)] = -1
 
         tau = self.t - self.n_step_size + 1
         self.update_tau(tau)
 
-        if done:
-            for tau_p in range(tau + 1, self.T):
+        if done:  # do remaining updates
+            for tau_p in range(tau + 1, self.t + 1):
                 self.update_tau(tau_p)
 
             self.reset_episode_data()
@@ -81,23 +76,25 @@ class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
     def update_tau(self, tau):
 
         if tau >= 0:
-            G = sum([
-                pow(self.c.gamma, i - tau - 1) * self.observed_rewards[self.modded(i)]
-                for i in range(tau + 1, min(tau + self.n_step_size, self.T) + 1)
-            ])
+            value_estimate = self.value_estimate(
+                self.observed_states[self.modded(tau)],
+                self.selected_actions[self.modded(tau)]
+            )
 
-            if tau + self.n_step_size < self.T:
-                G += pow(self.c.gamma, self.n_step_size) * self.value_estimate(
-                    self.observed_states[self.modded(tau + self.n_step_size)],
-                    self.selected_actions[self.modded(tau + self.n_step_size)]
-                )
+            value_estimate_n = self.value_estimate(
+                self.observed_states[self.modded(tau + self.n_step_size)],
+                self.selected_actions[self.modded(tau + self.n_step_size)]
+            )
 
-            td_error = G - self.value_estimate(self.observed_states[self.modded(tau)],
-                                               self.selected_actions[self.modded(tau)])
+            td_error = sum([
+                (self.observed_rewards[self.modded(i)] - self.r_bar)
+                for i in range(tau + 1, tau + self.n_step_size + 1)
+            ]) + value_estimate_n - value_estimate
 
             # add training error
             self.add_training_error(td_error)
 
+            self.r_bar += self.c.beta * td_error
             self.w[
                 self.x(self.observed_states[self.modded(tau)], self.selected_actions[self.modded(tau)])
             ] += self.c.alpha * td_error
@@ -107,19 +104,15 @@ class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
             return np.random.choice(self.n_actions)
         else:
             q_estimates = np.array([self.value_estimate(state, a) for a in range(self.n_actions)])
-            if None in q_estimates:
-                print(q_estimates, "state", state)
             return self.greedy_action_select_q_values(q_estimates)
+
+    def value_estimate(self, s, a):
+        if a == -1: return 0
+        # return np.dot(self.w, self.x(s, a))
+        return np.sum(self.w[self.x(s, a)])
 
     def modded(self, idx):
         return idx % (self.n_step_size + 1)
-
-    def value_estimate(self, s, a):
-        assert s is not None
-        assert a >= 0
-
-        # return np.dot(self.w, self.x(s, a))
-        return np.sum(self.w[self.x(s, a)])
 
     def x(self, state, action):
         return tiles(self.iht, self.num_of_tilings, state * self.state_scale, [action])

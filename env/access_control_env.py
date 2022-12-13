@@ -35,20 +35,21 @@ class AccessControlEnv(gym.Env):
         self.t = 0
 
         self.n_servers = self.max_servers
-        self.priority = rng.uniform(self.min_priority, self.max_priority + 1)
+        self.priority = rng.integers(self.min_priority, self.max_priority + 1)
 
         return np.array([self.n_servers, self.priority]), {}
 
     def step(self, action):
         self.t += 1
 
-        server_change = True if action == 1 and self.n_servers > 0 else False
+        client_accepted = True if action == 1 and self.n_servers > 0 else False
         reward = 0
 
-        if server_change:
+        if client_accepted:
             reward = self.rewards[self.priority]
             self.n_servers -= 1
-            self.priority = rng.uniform(self.min_priority, self.max_priority + 1)
+
+        self.priority = rng.integers(self.min_priority, self.max_priority + 1)
 
         # some servers may become available
         self.n_servers += sum(rng.binomial(1, 0.06, self.max_servers - self.n_servers))

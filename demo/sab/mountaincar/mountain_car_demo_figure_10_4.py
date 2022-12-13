@@ -34,7 +34,7 @@ def generate_episodes(env, agent, n_episodes=1000):
         play(agent, env)
 
 
-def execute(agent_factory, env, n_runs=10, n_episodes=10_000):
+def execute(agent_factory, env, n_runs, n_episodes):
     w_env = EpisodeStatsWrapper(env, n_runs=n_runs, n_episodes=n_episodes)
 
     for run in tqdm(range(n_runs)):
@@ -47,7 +47,7 @@ def execute(agent_factory, env, n_runs=10, n_episodes=10_000):
     return length_means
 
 
-def execute_agents(agents, env, n_runs=10, n_episodes=10_000):
+def execute_agents(agents, env, n_runs, n_episodes):
     stats = []
     for agent in agents:
         lengths = execute(agent, env, n_runs, n_episodes)
@@ -84,38 +84,38 @@ def start():
     n_states = 2048
     n_runs = 100
 
-    env = gym.make('MountainCar-v0', max_episode_steps=10_000)
+    env = gym.make('MountainCar-v0', max_episode_steps=1_000)
     n_tilings = 8
     speed_scale = n_tilings / (0.6 + 1.2)
     velocity_scale = n_tilings / (0.07 + 0.07)
     state_scale = np.array([speed_scale, velocity_scale])
 
-    alpha_list = np.linspace(0.1, 1.6, 16)
+    alpha_list = np.linspace(0.1, 1.5, 15)
 
     agents = [
-        # [lambda: EpisodicSemiGradientNStepSarsaAgent(AgentTrainingConfig(epsilon=0, gamma=1.0, alpha=alpha), n_actions,
-        #                                              n_states, state_scale, n_tilings, n_step_size=1)
-        #  for alpha in alpha_list],
+        [lambda: EpisodicSemiGradientNStepSarsaAgent(AgentTrainingConfig(epsilon=0, gamma=1.0, alpha=alpha), n_actions,
+                                                      n_states, state_scale, n_tilings, n_step_size=1)
+          for alpha in alpha_list],
         # [lambda: EpisodicSemiGradientNStepSarsaAgent(AgentTrainingConfig(epsilon=0, gamma=1.0, alpha=alpha), n_actions,
         #                                              n_states, state_scale, n_tilings, n_step_size=2)
         #  for alpha in alpha_list],
         # [lambda: EpisodicSemiGradientNStepSarsaAgent(AgentTrainingConfig(epsilon=0, gamma=1.0, alpha=alpha), n_actions,
         #                                              n_states, state_scale, n_tilings, n_step_size=4)
         #  for alpha in alpha_list],
-        [lambda: EpisodicSemiGradientNStepSarsaAgent(AgentTrainingConfig(epsilon=0, gamma=1.0, alpha=alpha), n_actions,
-                                                     n_states, state_scale, n_tilings, n_step_size=8)
-         for alpha in alpha_list],
-        [lambda: EpisodicSemiGradientNStepSarsaAgent(AgentTrainingConfig(epsilon=0, gamma=1.0, alpha=alpha), n_actions,
-                                                     n_states, state_scale, n_tilings, n_step_size=16)
-         for alpha in alpha_list]
+        #[lambda: EpisodicSemiGradientNStepSarsaAgent(AgentTrainingConfig(epsilon=0, gamma=1.0, alpha=alpha), n_actions,
+        #                                             n_states, state_scale, n_tilings, n_step_size=8)
+        # for alpha in alpha_list],
+        #[lambda: EpisodicSemiGradientNStepSarsaAgent(AgentTrainingConfig(epsilon=0, gamma=1.0, alpha=alpha), n_actions,
+        #                                             n_states, state_scale, n_tilings, n_step_size=16)
+         #for alpha in alpha_list]
     ]
 
     labels = [
-        #f"n=1",
+        f"n=1",
         #f"n=2",
         #f"n=4",
-        f"n=8",
-        f"n=16",
+        #f"n=8",
+        #f"n=16",
     ]
 
     train_agents(agents, env, labels, n_runs, n_episodes)
