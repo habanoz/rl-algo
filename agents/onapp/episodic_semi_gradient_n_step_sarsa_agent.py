@@ -1,4 +1,5 @@
 import numpy as np
+from numpy import ndarray
 
 from agents.base_agent import BaseAgent
 from model.agent_training_config import AgentTrainingConfig
@@ -26,11 +27,13 @@ class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
         self.selected_actions = None
         self.observed_rewards = None
 
+        self.reset_episode_data()
+
     def reset_episode_data(self):
         self.next_action = None
         self.t = -1
         self.T = float("inf")
-        self.observed_states = np.empty(self.n_step_size + 1, dtype=int)
+        self.observed_states = np.empty(self.n_step_size + 1, dtype=ndarray)
         self.selected_actions = np.empty(self.n_step_size + 1, dtype=int)
         self.observed_rewards = np.empty(self.n_step_size + 1, dtype=int)
 
@@ -54,7 +57,7 @@ class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
 
             if not done:
                 self.observed_states[self.modded(self.t + 1)] = next_state
-                self.next_action = self.epsilon_greedy_action_select(next_state)
+                self.next_action = self.epsilon_greedy_action_select_q_values(next_state)
                 self.selected_actions[self.modded(self.t + 1)] = self.next_action
 
             else:
@@ -104,6 +107,8 @@ class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
             return np.random.choice(self.n_actions)
         else:
             q_estimates = np.array([self.value_estimate(state, a) for a in range(self.n_actions)])
+            if None in q_estimates:
+                print(q_estimates, "state", state)
             return self.greedy_action_select_q_values(q_estimates)
 
     def modded(self, idx):

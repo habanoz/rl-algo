@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from tqdm import tqdm
 
+from agents.onapp.episodic_semi_gradient_n_step_sarsa_agent import EpisodicSemiGradientNStepSarsaAgent
 from agents.onapp.episodic_semi_gradient_sarsa_agent import EpisodicSemiGradientSarsaAgent
 from model.agent_training_config import AgentTrainingConfig
 
@@ -51,14 +52,14 @@ def play(agent, env):
 
 
 def start():
-    n_episodes = 10_000
+    n_episodes = 1_000
     env = gym.make('MountainCar-v0')
     cfg = AgentTrainingConfig(epsilon=0, gamma=1.0, alpha=0.1)
     n_tilings = 8
     speed_scale = n_tilings / (0.6 + 1.2)
     velocity_scale = n_tilings / (0.07 + 0.07)
 
-    agent = EpisodicSemiGradientSarsaAgent(cfg, 3, 2048, np.array([speed_scale, velocity_scale]), n_tilings)
+    agent = EpisodicSemiGradientNStepSarsaAgent(cfg, 3, 2048, np.array([speed_scale, velocity_scale]), n_tilings, n_step_size=5)
 
     plot_episodes = [0, 99, 999, n_episodes - 1]
     fig = plt.figure(figsize=(40, 10))

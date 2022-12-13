@@ -56,7 +56,7 @@ class BaseAgent(AAgent, ABC):
         return self.greedy_action_select_q_values(q_values)
 
     def greedy_action_select_q_values(self, q_values):
-        max_val = np.max(q_values)
+        max_val = np.nanmax(q_values)
         return np.random.choice(np.where(q_values == max_val)[0])
 
     def greedy_action_set(self, state):
