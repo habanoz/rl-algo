@@ -9,7 +9,7 @@ from model.agent_training_config import AgentTrainingConfig
 class OffPolicyMcAgent(BaseAgent):
 
     def __init__(self, n_states, n_actions, config: AgentTrainingConfig, b_of_s=None, b_of_a_given_s=None):
-        super().__init__(copy(config), n_actions, n_states, "OffPolicyMcAgent")
+        super().__init__(config, n_actions, n_states, "OffPolicyMcAgent")
         self.n_states = n_states
         self.n_actions = n_actions
 

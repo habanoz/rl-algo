@@ -9,7 +9,7 @@ from model.agent_training_config import AgentTrainingConfig
 class OffPolicyNStepSarsaAgent(BaseAgent):
     def __init__(self, n_states, n_actions, config: AgentTrainingConfig, n_step_size=5, b_of_s=None,
                  b_of_a_given_s=None):
-        super().__init__(copy(config), n_actions, n_states, f"OffPolicyNStepSarsaAgent n{n_step_size}")
+        super().__init__(config, n_actions, n_states, f"OffPolicyNStepSarsaAgent n{n_step_size}")
 
         self.n_step_size = n_step_size
 

@@ -1,5 +1,3 @@
-from copy import copy
-
 import numpy as np
 
 from agents.base_agent import BaseAgent
