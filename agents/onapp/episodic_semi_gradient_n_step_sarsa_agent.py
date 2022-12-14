@@ -1,8 +1,7 @@
 import numpy as np
 from numpy import ndarray
 
-from agents.base_agent import BaseAgent
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 from util.tiles import IHT, tiles
 
 
@@ -48,14 +47,14 @@ class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
 
         return a0
 
-    def update(self, state, action, reward, done, next_state):
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
 
         self.t += 1
 
         if self.t < self.T:
             self.observed_rewards[self.modded(self.t + 1)] = reward
 
-            if not done:
+            if not terminated:
                 self.observed_states[self.modded(self.t + 1)] = next_state
                 self.next_action = self.epsilon_greedy_action_select_q_values(next_state)
                 self.selected_actions[self.modded(self.t + 1)] = self.next_action
@@ -70,13 +69,15 @@ class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
         tau = self.t - self.n_step_size + 1
         self.update_tau(tau)
 
-        if done:
+        if terminated or truncated:
+            if truncated and not terminated:
+                self.T = tau + self.n_step_size + 1
             for tau_p in range(tau + 1, self.T):
                 self.update_tau(tau_p)
 
             self.reset_episode_data()
 
-        super().update(state, action, reward, done, next_state)
+        super().update(state, action, reward, terminated, next_state)
 
     def update_tau(self, tau):
 
@@ -107,8 +108,6 @@ class EpisodicSemiGradientNStepSarsaAgent(BaseAgent):
             return np.random.choice(self.n_actions)
         else:
             q_estimates = np.array([self.value_estimate(state, a) for a in range(self.n_actions)])
-            if None in q_estimates:
-                print(q_estimates, "state", state)
             return self.greedy_action_select_q_values(q_estimates)
 
     def modded(self, idx):

@@ -1,10 +1,47 @@
-from abc import ABC
+from abc import ABC, abstractmethod
 from copy import copy
 
 import numpy as np
 
-from agents.a_agent import AAgent
-from model.agent_training_config import AgentTrainingConfig
+
+class AgentTrainingConfig:
+    def __init__(self, epsilon=1.0, epsilon_decay=None, min_epsilon=0.01, alpha=0.1, gamma=0.9, lambdaa=0.9, beta=0.1):
+        self.epsilon = epsilon
+        self.epsilon_decay = epsilon_decay
+        self.min_epsilon = min_epsilon
+
+        self.alpha = alpha
+        self.beta = beta
+        self.gamma = gamma
+        self.lambdaa = lambdaa
+        self.actions_to_take = None
+
+
+class AAgent(ABC):
+
+    @abstractmethod
+    def get_action(self, obs):
+        pass
+
+    @abstractmethod
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
+        pass
+
+    @abstractmethod
+    def state_values_mean(self):
+        pass
+
+    @abstractmethod
+    def state_values_max(self):
+        pass
+
+    @abstractmethod
+    def action_values(self):
+        pass
+
+    @abstractmethod
+    def get_policy(self):
+        pass
 
 
 class BaseAgent(AAgent, ABC):
@@ -28,9 +65,9 @@ class BaseAgent(AAgent, ABC):
     def get_action(self, obs):
         return self.epsilon_greedy_action_select(obs)
 
-    def update(self, state, action, reward, done, next_state):
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
 
-        if done:
+        if terminated:
             self.do_after_episode()
 
     def do_after_episode(self):

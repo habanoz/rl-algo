@@ -1,9 +1,6 @@
-from copy import copy
-
 import numpy as np
 
-from agents.base_agent import BaseAgent
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 
 
 class OffPolicyNStepSarsaAgent(BaseAgent):
@@ -52,13 +49,13 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
 
         return a0
 
-    def update(self, state, action, reward, done, next_state):
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
         self.t += 1
 
         if self.t < self.T:
             self.observed_rewards[self.modded(self.t + 1)] = reward
 
-            if not done:
+            if not terminated:
                 self.observed_states[self.modded(self.t + 1)] = next_state
                 self.next_action = self.b_of_s(next_state)
                 self.selected_actions[self.modded(self.t + 1)] = self.next_action
@@ -73,13 +70,13 @@ class OffPolicyNStepSarsaAgent(BaseAgent):
         tau = self.t - self.n_step_size + 1
         self.update_tau(tau)
 
-        if done:
+        if terminated:
             for tau_p in range(tau + 1, self.T):
                 self.update_tau(tau_p)
 
             self.reset_episode_data()
 
-        super().update(state, action, reward, done, next_state)
+        super().update(state, action, reward, terminated, next_state)
 
     def update_tau(self, tau):
 

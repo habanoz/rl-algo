@@ -1,9 +1,7 @@
+import numpy as np
 import numpy.random
 
-from agents.base_agent import BaseAgent
-import numpy as np
-
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 
 
 class DoubleQLearningAgent(BaseAgent):
@@ -16,9 +14,9 @@ class DoubleQLearningAgent(BaseAgent):
     def get_action(self, state):
         return self.epsilon_greedy_action_select_merged(state)
 
-    def update(self, state, action, reward, done, next_state):
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
         if numpy.random.binomial(1, 0.5) == 1:
-            next_q_value = 0 if done else self.Q2[next_state, self.greedy_action_select_q1(next_state)]
+            next_q_value = 0 if terminated else self.Q2[next_state, self.greedy_action_select_q1(next_state)]
             td_error = reward + self.c.gamma * next_q_value - self.Q1[state, action]
 
             # add training error
@@ -26,7 +24,7 @@ class DoubleQLearningAgent(BaseAgent):
 
             self.Q1[state, action] += self.c.alpha * td_error
         else:
-            next_q_value = 0 if done else self.Q1[next_state, self.greedy_action_select_q2(next_state)]
+            next_q_value = 0 if terminated else self.Q1[next_state, self.greedy_action_select_q2(next_state)]
             td_error = reward + self.c.gamma * next_q_value - self.Q2[state, action]
 
             # add training error
@@ -34,7 +32,7 @@ class DoubleQLearningAgent(BaseAgent):
 
             self.Q2[state, action] += self.c.alpha * td_error
 
-        super().update(state, action, reward, done, next_state)
+        super().update(state, action, reward, terminated, next_state)
 
     def action_values(self):
         return (self.Q1 + self.Q2) / 2

@@ -1,8 +1,7 @@
 import numpy as np
 from numpy import ndarray
 
-from agents.base_agent import BaseAgent
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 from util.tiles import IHT, tiles
 
 
@@ -47,12 +46,12 @@ class DifferentialSemiGradientNStepSarsaAgent(BaseAgent):
 
         return a0
 
-    def update(self, state, action, reward, done, next_state):
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
         self.t += 1
 
         self.observed_rewards[self.modded(self.t + 1)] = reward
 
-        if not done:
+        if not terminated:
             self.observed_states[self.modded(self.t + 1)] = next_state
             self.next_action = self.epsilon_greedy_action_select_q_values(next_state)
             self.selected_actions[self.modded(self.t + 1)] = self.next_action
@@ -65,13 +64,13 @@ class DifferentialSemiGradientNStepSarsaAgent(BaseAgent):
         tau = self.t - self.n_step_size + 1
         self.update_tau(tau)
 
-        if done:  # do remaining updates
+        if terminated or truncated:  # do remaining updates
             for tau_p in range(tau + 1, self.t + 1):
                 self.update_tau(tau_p)
 
             self.reset_episode_data()
 
-        super().update(state, action, reward, done, next_state)
+        super().update(state, action, reward, terminated, next_state)
 
     def update_tau(self, tau):
 

@@ -9,7 +9,7 @@ from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
 from agents.n_step.n_step_tree_backup_agent import NStepTreeBackupAgent
 from agents.n_step.off_policy_n_step_q_sigma_agent import OffPolicyNStepQSigmaAgent
 from episodes_stats import EpisodesStats
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 from env.episode_stats_wrapper import EpisodeStatsWrapper
 from rms_errors_for_baseline import RMSErrorsForBaseline
 from util.serialize_helper import serialize_values, deserialize_values

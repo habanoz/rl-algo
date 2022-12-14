@@ -1,7 +1,6 @@
-from agents.base_agent import BaseAgent
 import numpy as np
 
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 
 
 class ExpectedSarsaAgent(BaseAgent):
@@ -11,8 +10,8 @@ class ExpectedSarsaAgent(BaseAgent):
 
         self.Q = np.zeros((n_states, n_actions))
 
-    def update(self, state, action, reward, done, next_state):
-        expected_next_q_value = 0 if done else sum(
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
+        expected_next_q_value = 0 if terminated else sum(
             [self.pi_at_st(a, next_state) * self.Q[next_state, a]
              for a in range(self.n_actions)]
         )
@@ -24,7 +23,7 @@ class ExpectedSarsaAgent(BaseAgent):
 
         self.Q[state, action] += self.c.alpha * td_error
 
-        super().update(state, action, reward, done, next_state)
+        super().update(state, action, reward, terminated, next_state)
 
     def pi_at_st(self, at, st):
         return 1 if at == self.greedy_action_select(st) else 0

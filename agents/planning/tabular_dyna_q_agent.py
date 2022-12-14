@@ -1,7 +1,6 @@
 import numpy as np
 
-from agents.base_agent import BaseAgent
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 
 
 class TabularDynaQAgent(BaseAgent):
@@ -13,8 +12,8 @@ class TabularDynaQAgent(BaseAgent):
 
         self.n_planning_steps = n_planning_steps
 
-    def update(self, state, action, reward, done, next_state):
-        next_q = 0 if done else max(self.Q[next_state, :])
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
+        next_q = 0 if terminated else max(self.Q[next_state, :])
         td_error = (reward + self.c.gamma * next_q - self.Q[state, action])
 
         # add training error
@@ -22,11 +21,11 @@ class TabularDynaQAgent(BaseAgent):
 
         self.Q[state, action] += self.c.alpha * td_error
 
-        self.model[(state, action)] = (reward, next_state, done)
+        self.model[(state, action)] = (reward, next_state, terminated)
 
         self.do_planning()
 
-        super().update(state, action, reward, done, next_state)
+        super().update(state, action, reward, terminated, next_state)
 
     def do_planning(self):
         observed_state_actions = np.array(list(self.model.keys()))

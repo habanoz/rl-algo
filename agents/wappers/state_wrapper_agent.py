@@ -1,4 +1,5 @@
 from agents.a_agent import AAgent
+
 from agents.wappers.state_coder import StateFlattener
 
 
@@ -11,11 +12,11 @@ class StateWrapperAgent(AAgent):
         s = self.flattener.flatten(obs)
         return self.delegate.get_action(s)
 
-    def update(self, state, action, reward, done, next_state):
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
         s = self.flattener.flatten(state)
         sp = self.flattener.flatten(next_state)
 
-        return self.delegate.update(s, action, reward, done, sp)
+        return self.delegate.update(s, action, reward, terminated, sp)
 
     def state_values_max(self):
         states = self.delegate.state_values_max()

@@ -17,7 +17,7 @@ from agents.td.sarsa_agent import SarsaAgent
 from agents.wappers.state_wrapper_agent import StateWrapperAgent
 from demo.sab.blackjack.blackjack_state_flattener import BlackjackStateFlattener, N_DEALER_STATES, N_PLAYER_STATES, \
     N_ACE_STATES
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 from plot.grid_state_value_plotter import BlackjackStatePlotter
 
 

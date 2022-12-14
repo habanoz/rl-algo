@@ -1,8 +1,8 @@
 from collections import defaultdict
 
-from agents.base_agent import BaseAgent
-from model.agent_training_config import AgentTrainingConfig
 import numpy as np
+
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 
 
 class OnPolicyFirstVisitMcAgent(BaseAgent):
@@ -16,7 +16,7 @@ class OnPolicyFirstVisitMcAgent(BaseAgent):
         self.visits = set()
         self.Q = np.zeros((n_states, n_actions))
 
-    def update(self, state, action, reward, terminated, next_state):
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
         first_visit = (state, action) not in self.visits
         if not first_visit:
             self.visits.add((state, action))

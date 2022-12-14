@@ -3,7 +3,7 @@ from matplotlib import pyplot as plt
 import seaborn as sns
 from agents.onapp.differential_semi_gradient_sarsa_agent import DifferentialSemiGradientSarsaAgent
 from env.access_control_env import AccessControlEnv
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 
 
 def train_agent(agent, env):

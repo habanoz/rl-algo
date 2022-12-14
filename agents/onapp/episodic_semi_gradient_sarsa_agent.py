@@ -1,7 +1,6 @@
 import numpy as np
 
-from agents.base_agent import BaseAgent
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 from util.tiles import IHT, tiles
 
 
@@ -25,8 +24,8 @@ class EpisodicSemiGradientSarsaAgent(BaseAgent):
 
         return self.epsilon_greedy_action_select_q_values(obs)
 
-    def update(self, state, action, reward, done, next_state):
-        if done:
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
+        if terminated:
             td_error = (reward - self.value_estimate(state, action))
 
             self.add_training_error(td_error)

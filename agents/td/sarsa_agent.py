@@ -1,7 +1,6 @@
 import numpy as np
 
-from agents.base_agent import BaseAgent
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 
 
 class SarsaAgent(BaseAgent):
@@ -18,9 +17,9 @@ class SarsaAgent(BaseAgent):
 
         return self.epsilon_greedy_action_select(state)
 
-    def update(self, state, action, reward, done, next_state):
-        self.next_action = None if done else self.epsilon_greedy_action_select(next_state)
-        next_q_value = 0 if done else self.Q[next_state, self.next_action]
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
+        self.next_action = None if terminated else self.epsilon_greedy_action_select(next_state)
+        next_q_value = 0 if terminated else self.Q[next_state, self.next_action]
 
         td_error = (reward + self.c.gamma * next_q_value - self.Q[state, action])
 
@@ -29,7 +28,7 @@ class SarsaAgent(BaseAgent):
 
         self.Q[state, action] += self.c.alpha * td_error
 
-        super().update(state, action, reward, done, next_state)
+        super().update(state, action, reward, terminated, next_state)
 
     def action_values(self):
         return self.Q

@@ -1,9 +1,6 @@
-from copy import copy
-
-from agents.base_agent import BaseAgent
 import numpy as np
 
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 
 
 class OffPolicyMcAgent(BaseAgent):
@@ -34,7 +31,7 @@ class OffPolicyMcAgent(BaseAgent):
     def get_action(self, state):
         return self.b_of_s(state)
 
-    def update(self, state, action, reward, terminated, next_state):
+    def update(self, state, action, reward, terminated, next_state, truncated=False):
         self.transitions.append((state, action, reward, next_state))
 
         if terminated:

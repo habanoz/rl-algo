@@ -6,7 +6,7 @@ from tqdm import tqdm
 
 from agents.onapp.episodic_semi_gradient_sarsa_agent import EpisodicSemiGradientSarsaAgent
 from env.episode_stats_wrapper import EpisodeStatsWrapper
-from model.agent_training_config import AgentTrainingConfig
+from agents.base_agent import BaseAgent, AgentTrainingConfig
 
 
 def play(agent, env):
