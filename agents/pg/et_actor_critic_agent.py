@@ -4,11 +4,11 @@ from numpy import ndarray
 from agents.base_agent import BaseAgent, AgentTrainingConfig, Feature
 
 
-class OneStepActorCriticAgent(BaseAgent):
+class ETActorCriticAgent(BaseAgent):
 
     def __init__(self, n_states, n_actions, config: AgentTrainingConfig, feature: Feature,
                  initial_theta: ndarray = None):
-        super().__init__(config, n_actions, n_states, "OneStepActorCriticAgent")
+        super().__init__(config, n_actions, n_states, "ETActorCriticAgent")
 
         self.theta: ndarray = initial_theta
         if self.theta is None:
@@ -17,11 +17,16 @@ class OneStepActorCriticAgent(BaseAgent):
         self.w: ndarray = np.zeros(n_states)
         self.x = feature
         self.I = None
+        self.z = None
+        self.z_w = None
 
         self._reset()
 
     def _reset(self):
         self.I = 1
+
+        self.z = np.zeros_like(self.theta)
+        self.z_w = np.zeros_like(self.w)
 
     def get_action(self, state):
         return np.random.choice(range(self.n_actions), p=self.pi_s(state))
@@ -32,9 +37,12 @@ class OneStepActorCriticAgent(BaseAgent):
         td_error = reward + self.c.gamma * next_estimate - self.value_estimate(state)
         self.add_training_error(td_error)
 
-        self.w += (self.c.alpha_w * td_error) * self.value_estimate_gradient(state)
+        self.z_w = (self.c.gamma * self.c.lambda_w) * self.z_w + self.value_estimate_gradient(state)
+        self.z = (self.c.gamma * self.c.lambdaa) * self.z + self.I * self.grad_log_pi(action, state)
 
-        self.theta += self.c.alpha * self.I * td_error * self.grad_log_pi(action, state)
+        self.w += (self.c.alpha_w * td_error) * self.z_w
+        self.theta += (self.c.alpha * td_error) * self.z
+
         self.I *= self.c.gamma
 
         if terminated or truncated:

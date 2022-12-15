@@ -4,6 +4,7 @@ from numpy import ndarray
 from tqdm import tqdm
 
 from agents.base_agent import AgentTrainingConfig, Feature
+from agents.pg.et_actor_critic_agent import ETActorCriticAgent
 from agents.pg.one_step_actor_critic_agent import OneStepActorCriticAgent
 from agents.pg.reinforce_softmax_linear_mc_agent import ReinforceSoftmaxLinearMcAgent
 from agents.pg.reinforce_softmax_linear_wih_baselined_mc_agent import ReinforceSoftmaxLinearWithBaselineMcAgent
@@ -60,12 +61,15 @@ def start():
     agents = [
         lambda: OneStepActorCriticAgent(4, 2, AgentTrainingConfig(alpha=pow(2, -9), gamma=1.0, alpha_w=pow(2, -6)), CorridorFeature(),initial_theta=np.array([-1.0, 1.0])),
 
+        lambda: ETActorCriticAgent(4, 2, AgentTrainingConfig(alpha=pow(2, -9), gamma=1.0, alpha_w=pow(2, -6), lambdaa=0.5, lambda_w=0.5), CorridorFeature(),initial_theta=np.array([-1.0, 1.0])),
+
         lambda: ReinforceSoftmaxLinearMcAgent( 4, 2, AgentTrainingConfig(alpha=pow(2, -12), gamma=1.0), CorridorFeature(), initial_theta=np.array([-1.0, 1.0])),
 
         lambda: ReinforceSoftmaxLinearWithBaselineMcAgent( 4, 2, AgentTrainingConfig(alpha=pow(2, -9), gamma=1.0, alpha_w=pow(2, -6)), CorridorFeature(), initial_theta=np.array([-1.0, 1.0])),
     ]
 
     agent_labels = ["Actor Critic a=2^-9,a_w=a=2^-6",
+                    "ET Actor Critic a=2^-9,a_w=a=2^-6 lambda 0.9",
                     "REINFORCE a=2^-12",
                     "REINFORCE  with baseline a=2^-9,a_w=a=2^-6"
                     ]
