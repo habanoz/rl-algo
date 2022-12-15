@@ -1,9 +1,10 @@
 import numpy as np
-from matplotlib import pyplot as plt
 import seaborn as sns
+from matplotlib import pyplot as plt
+
+from agents.base_agent import AgentTrainingConfig
 from agents.onapp.differential_semi_gradient_sarsa_agent import DifferentialSemiGradientSarsaAgent
 from env.access_control_env import AccessControlEnv
-from agents.base_agent import BaseAgent, AgentTrainingConfig
 
 
 def train_agent(agent, env):

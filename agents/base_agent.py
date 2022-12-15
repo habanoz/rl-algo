@@ -2,6 +2,15 @@ from abc import ABC, abstractmethod
 from copy import copy
 
 import numpy as np
+from numpy import ndarray
+
+
+class Feature:
+    def s_a(self, state, action) -> ndarray:
+        raise Exception("Not implemented. Override this method.")
+
+    def s(self, state) -> ndarray:
+        raise Exception("Not implemented. Override this method.")
 
 
 class AgentTrainingConfig:
