@@ -4,62 +4,53 @@ from numpy import ndarray
 from agents.base_agent import BaseAgent, AgentTrainingConfig, Feature
 
 
-class ReinforceSoftmaxLinearWithBaselineMcAgent(BaseAgent):
+class OneStepActorCriticAgent(BaseAgent):
 
     def __init__(self, n_states, n_actions, config: AgentTrainingConfig, feature: Feature,
                  initial_theta: ndarray = None):
-        super().__init__(config, n_actions, n_states, "ReinforceSoftmaxLinearWithBaselineMcAgent")
-
-        self.states = []
-        self.actions = []
-        self.rewards = [0]
+        super().__init__(config, n_actions, n_states, "OneStepActorCriticAgent")
 
         self.theta: ndarray = initial_theta
         if self.theta is None:
             self.theta = np.zeros(len(feature.s_a(0, 0)))
 
-        self.w: float = 0.0
+        self.w: ndarray = np.zeros(n_states)
         self.x = feature
+        self.I = None
 
-    def get_action(self, obs):
-        return np.random.choice(range(self.n_actions), p=self.pi_s(obs))
+        self._reset()
+
+    def _reset(self):
+        self.I = 1
+
+    def get_action(self, state):
+        return np.random.choice(range(self.n_actions), p=self.pi_s(state))
 
     def update(self, state, action, reward, terminated, next_state, truncated=False):
+        next_estimate = 0 if terminated else self.value_estimate(next_state)
 
-        self.states.append(state)
-        self.actions.append(action)
-        self.rewards.append(reward)
+        td_error = reward + self.c.gamma * next_estimate - self.value_estimate(state)
+        self.add_training_error(td_error)
+
+        # since we are using a scalar w instead of a vector w;
+        # the gradient of the value estimate is also scalar
+        self.w += (self.c.alpha_w * td_error) * self.value_estimate_gradient(state)
+
+        self.theta += self.c.alpha * self.I * td_error * self.grad_log_pi(action, state)
+        self.I *= self.c.gamma
 
         if terminated or truncated:
-            self.do_episode_ended()
+            self._reset()
 
         super().update(state, action, reward, terminated, next_state)
 
-    def do_episode_ended(self):
-        self.learn()
-        self.do_after_episode()
+    def value_estimate(self, state):
+        return self.w[state]
 
-        self.states = []
-        self.actions = []
-        self.rewards = [0]
-
-    def learn(self):
-        T = len(self.states)
-        G = np.empty(T)
-
-        G[-1] = self.rewards[-1]
-        for t in range(T - 2, -1, -1):
-            G[t] = self.rewards[t + 1] + self.c.gamma * G[t + 1]
-
-        for t in range(T):
-            delta = G[t] - self.w
-
-            # since we are using a scalar w instead of a vector w;
-            # the gradient of the value estimate is constant
-            self.w += self.c.alpha_w * delta * self.value_estimate_gradient(self.states[t])
-
-            self.theta += (self.c.alpha * pow(self.c.gamma, t) * delta) \
-                          * self.grad_log_pi(self.actions[t], self.states[t])
+    def value_estimate_gradient(self, state):
+        grad = np.zeros_like(self.w)
+        grad[state] = 1.0
+        return grad
 
     def grad_log_pi(self, a, s):
         # equation 13.9
@@ -95,9 +86,6 @@ class ReinforceSoftmaxLinearWithBaselineMcAgent(BaseAgent):
             raise Exception("none encountered. Try lowering learning rate.")
 
         return pi
-
-    def value_estimate_gradient(self, state):
-        return 1.0
 
     def action_values(self):
         pass
