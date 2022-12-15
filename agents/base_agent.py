@@ -13,15 +13,32 @@ class Feature:
         raise Exception("Not implemented. Override this method.")
 
 
+class StateFeature:
+    def s(self, state) -> ndarray:
+        raise Exception("Not implemented. Override this method.")
+
+    def dim(self):
+        raise Exception("Not implemented. Override this method.")
+
+
+class ValueFeature:
+    def s_a(self, state, action) -> ndarray:
+        raise Exception("Not implemented. Override this method.")
+
+    def dim(self):
+        raise Exception("Not implemented. Override this method.")
+
+
 class AgentTrainingConfig:
     def __init__(self, epsilon=1.0, epsilon_decay=None, min_epsilon=0.01, alpha=0.1, gamma=0.9, lambdaa=0.9, beta=0.1,
-                 alpha_w=None, lambda_w=None):
+                 alpha_w=None, lambda_w=None, alpha_r=None):
         self.epsilon = epsilon
         self.epsilon_decay = epsilon_decay
         self.min_epsilon = min_epsilon
 
         self.alpha = alpha
         self.alpha_w = alpha_w
+        self.alpha_r = alpha_r
         self.beta = beta
         self.gamma = gamma
         self.lambdaa = lambdaa
