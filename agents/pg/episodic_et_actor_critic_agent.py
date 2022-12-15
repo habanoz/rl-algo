@@ -8,7 +8,7 @@ class EpisodicETActorCriticAgent(BaseAgent):
 
     def __init__(self, n_states, n_actions, config: AgentTrainingConfig, feature: ValueFeature,
                  feature_w: StateFeature):
-        super().__init__(config, n_actions, n_states, "ContinuingETActorCriticAgent")
+        super().__init__(config, n_actions, n_states, "EpisodicETActorCriticAgent")
 
         self.x: ValueFeature = feature
         self.x_w: StateFeature = feature_w
