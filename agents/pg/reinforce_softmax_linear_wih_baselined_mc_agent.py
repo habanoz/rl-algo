@@ -1,13 +1,14 @@
 import numpy as np
-from numpy import ndarray, isnan
+from numpy import ndarray
 
 from agents.base_agent import BaseAgent, AgentTrainingConfig, Feature
 
 
-class ReinforceSoftmaxLinearMcAgent(BaseAgent):
+class ReinforceSoftmaxLinearWithBaselineMcAgent(BaseAgent):
 
-    def __init__(self, n_states, n_actions, config: AgentTrainingConfig, feature: Feature, initial_theta:ndarray=None):
-        super().__init__(config, n_actions, n_states, "ReinforceSoftmaxLinearMcAgent")
+    def __init__(self, n_states, n_actions, config: AgentTrainingConfig, feature: Feature,
+                 initial_theta: ndarray = None):
+        super().__init__(config, n_actions, n_states, "ReinforceSoftmaxLinearWithBaselineMcAgent")
 
         self.states = []
         self.actions = []
@@ -17,6 +18,7 @@ class ReinforceSoftmaxLinearMcAgent(BaseAgent):
         if self.theta is None:
             self.theta = np.zeros(len(feature.s_a(0, 0)))
 
+        self.w: float = 0.0
         self.x = feature
 
     def get_action(self, obs):
@@ -50,8 +52,14 @@ class ReinforceSoftmaxLinearMcAgent(BaseAgent):
             G[t] = self.rewards[t + 1] + self.c.gamma * G[t + 1]
 
         for t in range(T):
-            self.theta += (self.c.alpha * pow(self.c.gamma, t) * G[t]) * \
-                          self.grad_log_pi(self.actions[t], self.states[t])
+            delta = G[t] - self.w
+
+            # since we are using a scalar w instead of a vector w;
+            # the gradient of the value estimate is excluded
+            self.w += self.c.alpha_w * delta
+
+            self.theta += (self.c.alpha * pow(self.c.gamma, t) * delta) \
+                          * self.grad_log_pi(self.actions[t], self.states[t])
 
     def grad_log_pi(self, a, s):
         # equation 13.9

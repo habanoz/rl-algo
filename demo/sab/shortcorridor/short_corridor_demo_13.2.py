@@ -5,6 +5,7 @@ from tqdm import tqdm
 
 from agents.base_agent import AgentTrainingConfig, Feature
 from agents.pg.reinforce_softmax_linear_mc_agent import ReinforceSoftmaxLinearMcAgent
+from agents.pg.reinforce_softmax_linear_wih_baselined_mc_agent import ReinforceSoftmaxLinearWithBaselineMcAgent
 from env.episode_stats_wrapper import EpisodeStatsWrapper
 from env.short_corridor_env import ShortCorridorEnv
 
@@ -40,12 +41,11 @@ def generate_episodes(env, agent, n_episodes=1000):
         play(agent, env)
 
 
-def execute(alpha, env, n_runs, n_episodes):
+def execute(agent_producer, env, n_runs, n_episodes):
     w_env = EpisodeStatsWrapper(env, n_runs=n_runs, n_episodes=n_episodes)
 
     for run in tqdm(range(n_runs)):
-        agent = ReinforceSoftmaxLinearMcAgent(4, 2, AgentTrainingConfig(alpha=alpha, gamma=1.0),
-                                              CorridorFeature(), initial_theta=np.array([-1.0, 1.0]))
+        agent = agent_producer()
         generate_episodes(w_env, agent, n_episodes=n_episodes)
 
     return np.mean(w_env.rewards, axis=0)
@@ -56,22 +56,31 @@ def start():
     n_episodes = 1000
 
     env = ShortCorridorEnv()
-    alphas = [pow(2, -11), pow(2, -12), pow(2, -13), pow(2, -14), pow(2, -15)]
-    alpha_labels = ["2^-11", "2^-12", "2^-13", "2^-14", "2^-15"] # below "2^-9" is not converging.
+    agents = [
+        lambda: ReinforceSoftmaxLinearMcAgent(4, 2, AgentTrainingConfig(alpha=pow(2, -14), gamma=1.0),
+                                              CorridorFeature(), initial_theta=np.array([-1.0, 1.0])),
+        lambda: ReinforceSoftmaxLinearMcAgent(4, 2, AgentTrainingConfig(alpha=pow(2, -12), gamma=1.0),
+                                              CorridorFeature(), initial_theta=np.array([-1.0, 1.0])),
+        lambda: ReinforceSoftmaxLinearWithBaselineMcAgent(4, 2, AgentTrainingConfig(alpha=pow(2, -9), gamma=1.0,
+                                                                                    alpha_w=pow(2, -6)),
+                                                          CorridorFeature(), initial_theta=np.array([-1.0, 1.0])),
+    ]
 
-    assert len(alphas) == len(alpha_labels)
+    agent_labels = ["a=2^-14", "a=2^-12",  "a=2^-9,a_w=a=2^-6"]
+
+    assert len(agents) == len(agent_labels)
 
     agent_rewards = []
-    for i in range(len(alphas)):
-        rewards = execute(alphas[i], env, n_runs, n_episodes)
+    for i in range(len(agents)):
+        rewards = execute(agents[i], env, n_runs, n_episodes)
         agent_rewards.append(rewards)
 
     fig, axs = plt.subplots(ncols=1, nrows=1, figsize=(20, 10))
 
     axs.set_title("Total Rewards (Initial theta set for greedy left actions)")
 
-    for i in range(len(alphas)):
-        axs.plot(agent_rewards[i], label=alpha_labels[i])
+    for i in range(len(agents)):
+        axs.plot(agent_rewards[i], label=agent_labels[i])
 
     axs.set_ylabel("Total Reward on Episode")
     axs.set_ylabel("Episode")

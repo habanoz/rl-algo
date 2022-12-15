@@ -2,7 +2,7 @@ import gymnasium as gym
 import numpy as np
 from gymnasium import spaces
 
-START_STATE = 3
+START_STATE = 0
 
 
 class ShortCorridorEnv(gym.Env):
