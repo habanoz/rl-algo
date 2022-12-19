@@ -102,3 +102,6 @@ The demo package contains demonstrations of the algorithms. The env package cont
 
 ![Short corridor total rewards by episode with baseline](images/figure_13.2.png)
 
+* Total reward on episode - Actor Critic
+
+![Short corridor total rewards by episode for actor critic](images/figure_13.2_actor_critic.png)
