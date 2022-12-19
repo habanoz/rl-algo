@@ -14,7 +14,7 @@ from agents.td.double_q_learning_agent import DoubleQLearningAgent
 from agents.td.expected_sarsa_agent import ExpectedSarsaAgent
 from agents.td.q_learning_agent import QLearningAgent
 from agents.td.sarsa_agent import SarsaAgent
-from agents.wappers.state_wrapper_agent import StateWrapperAgent
+from agents.wrappers.state_wrapper_agent import StateWrapperAgent
 from demo.sab.blackjack.blackjack_state_flattener import BlackjackStateFlattener, N_DEALER_STATES, N_PLAYER_STATES, \
     N_ACE_STATES
 from agents.base_agent import BaseAgent, AgentTrainingConfig

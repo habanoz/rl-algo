@@ -8,10 +8,10 @@ from plot.frozen_lake_plotter import FrozenLakePlotter
 from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
 from agents.n_step.n_step_tree_backup_agent import NStepTreeBackupAgent
 from agents.n_step.off_policy_n_step_q_sigma_agent import OffPolicyNStepQSigmaAgent
-from episodes_stats import EpisodesStats
+from util.episodes_stats import EpisodesStats
 from agents.base_agent import BaseAgent, AgentTrainingConfig
 from env.episode_stats_wrapper import EpisodeStatsWrapper
-from rms_errors_for_baseline import RMSErrorsForBaseline
+from util.rms_errors_for_baseline import RMSErrorsForBaseline
 from util.serialize_helper import serialize_values, deserialize_values
 
 
@@ -40,7 +40,7 @@ def generate_baseline(env, name: str, n_episodes=1000):
     serialize_values(v, name)
 
 
-def generate_episodes(env, agent, n_episodes=1000, value_baseline=None):
+def train_agent(env, agent, n_episodes=1000, value_baseline=None):
     value_errors = np.empty(n_episodes)
     training_errors = np.empty(n_episodes)
 
@@ -69,7 +69,7 @@ def generate_episodes(env, agent, n_episodes=1000, value_baseline=None):
     return value_errors, training_errors
 
 
-def execute(agent_factory, env, n_runs=10, n_episodes=10_000, value_baseline=None):
+def train_and_generate_stats(agent_factory, env, n_runs=10, n_episodes=10_000, value_baseline=None):
     rolling_length = max(n_episodes // 100, 1)
 
     w_env = EpisodeStatsWrapper(env, n_runs=n_runs, n_episodes=n_episodes)
@@ -79,8 +79,8 @@ def execute(agent_factory, env, n_runs=10, n_episodes=10_000, value_baseline=Non
     for run in range(n_runs):
         agent = agent_factory()
 
-        new_rms_errors, new_training_errors = generate_episodes(w_env, agent, n_episodes=n_episodes,
-                                                                value_baseline=value_baseline)
+        new_rms_errors, new_training_errors = train_agent(w_env, agent, n_episodes=n_episodes,
+                                                          value_baseline=value_baseline)
 
         rms_errors += new_rms_errors
         training_errors += new_training_errors
@@ -137,7 +137,7 @@ def train_agents(agents, labels, runs: int, n_episodes: int, value_baseline: nda
     stats = []
 
     for agent in agents:
-        stats.append(execute(agent, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline))
+        stats.append(train_and_generate_stats(agent, env, n_runs=runs, n_episodes=n_episodes, value_baseline=value_baseline))
 
     fig, axs = plt.subplots(ncols=1, nrows=5, figsize=(20, 10))
 

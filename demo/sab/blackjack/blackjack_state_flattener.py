@@ -1,7 +1,7 @@
 import numpy as np
 from numpy import ndarray
 
-from agents.wappers.state_coder import StateFlattener
+from agents.wrappers.state_coder import StateFlattener
 
 MIN_PLAYER_SUM = 12
 N_PLAYER_STATES = 10

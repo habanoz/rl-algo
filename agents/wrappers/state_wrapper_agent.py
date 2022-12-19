@@ -1,6 +1,6 @@
 from agents.a_agent import AAgent
 
-from agents.wappers.state_coder import StateFlattener
+from agents.wrappers.state_coder import StateFlattener
 
 
 class StateWrapperAgent(AAgent):
