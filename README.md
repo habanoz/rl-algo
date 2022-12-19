@@ -72,6 +72,15 @@ The demo package contains demonstrations of the algorithms. The env package cont
 ![Mountain Car Episode Lengths by alpha values](images/figure_10.2.png)
 
 
-* Sutton&Barto Figure 10.3 - Episodic Semi-Gradient n-Step Sarsa Agent with different step sizes
+* Sutton&Barto Figure 10.3 - Episodic Semi-Gradient n-Step Sarsa Agent with different different step sizes
 
 ![Mountain Car Episode Lengths by step sizes](images/figure_10.3.png)
+
+* Sutton&Barto Figure 10.4 - Episodic Semi-Gradient n-Step Sarsa Agent with different step sizes and alpha values
+
+![Mountain Car Episode Lengths by step sizes and alphas](images/figure_10.4.png)
+
+
+* Sutton&Barto Figure 12.10 - Binary Feature Linear Function Approximation SARSA Agent with different lambda and alpha values
+
+![Mountain Car Episode Lengths by lambdas and alphas](images/figure_12.10.png)
