@@ -52,9 +52,9 @@ The demo package contains demonstrations of the algorithms. The env package cont
 
 ### Blackjack
 
-* Blackjack - Monte Carlo Agent - 6M episodes
+* Sutton&Barto Figure 5.2 - Blackjack - Monte Carlo Agent - 6M episodes
 
-![Blackjack - Monte Carlo - 6M episodes](images/figure_blackjack-MC-6_000_000.png)
+![Blackjack - Monte Carlo - 6M episodes](images/figure_5.2.png)
 
 * Blackjack - Expected SARSA Agent - 6M episodes
 
@@ -84,3 +84,21 @@ The demo package contains demonstrations of the algorithms. The env package cont
 * Sutton&Barto Figure 12.10 - Binary Feature Linear Function Approximation SARSA Agent with different lambda and alpha values
 
 ![Mountain Car Episode Lengths by lambdas and alphas](images/figure_12.10.png)
+
+
+### Access Control
+
+* Sutton&Barto Figure 10.5 - Episodic Semi-Gradient 5-Step Sarsa Agent
+
+![Access control action values](images/figure_10.5.png)
+
+### Short Corridor Grid World
+
+* Sutton&Barto Figure 13.1 - Total reward on episode - Reinforce softmax linear MC Agent
+
+![Short corridor total rewards by episode](images/figure_13.1.png)
+
+* Sutton&Barto Figure 13.2 - Total reward on episode - Reinforce softmax linear MC Agent with Baseline
+
+![Short corridor total rewards by episode with baseline](images/figure_13.2.png)
+

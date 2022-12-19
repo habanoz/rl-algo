@@ -2,22 +2,11 @@ import gymnasium as gym
 from gymnasium import Env
 from tqdm import tqdm
 
-from agents.a_agent import AAgent
-from agents.mc.off_policy_mc_agent import OffPolicyMcAgent
-from agents.mc.on_policy_first_visit_mc_agent import OnPolicyFirstVisitMcAgent
-from agents.n_step.n_step_sarsa_agent import NStepSarsaAgent
-from agents.n_step.n_step_tree_backup_agent import NStepTreeBackupAgent
-from agents.n_step.off_policy_n_step_q_sigma_agent import OffPolicyNStepQSigmaAgent
-from agents.n_step.off_policy_n_step_sarsa_agent import OffPolicyNStepSarsaAgent
+from agents.base_agent import AgentTrainingConfig, AAgent
 from agents.planning.tabular_dyna_q_agent import TabularDynaQAgent
-from agents.td.double_q_learning_agent import DoubleQLearningAgent
-from agents.td.expected_sarsa_agent import ExpectedSarsaAgent
-from agents.td.q_learning_agent import QLearningAgent
-from agents.td.sarsa_agent import SarsaAgent
 from agents.wrappers.state_wrapper_agent import StateWrapperAgent
 from demo.sab.blackjack.blackjack_state_flattener import BlackjackStateFlattener, N_DEALER_STATES, N_PLAYER_STATES, \
     N_ACE_STATES
-from agents.base_agent import BaseAgent, AgentTrainingConfig
 from plot.grid_state_value_plotter import BlackjackStatePlotter
 
 
