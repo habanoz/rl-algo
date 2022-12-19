@@ -2,7 +2,12 @@
 
 This repository contains implementations of control algorihms found in Sutton&Barto book. Only algorithms presented in boxes are included.
 
+RL algorithms looks simle to implement at first glance. But they are tricky to implement. Subtle errors may result in divergance, not learning and poor performance. The latter is arguably the worst because it is hard to pin point. An algorithm has many reasons to perform poorly apart from the implementation issues e.g. sub-optimal hyper parameter selection, randomness... 
+
+I have used sutton&barto book illustrations as a measure of implementation correctness. I tried to replicate the illustrations with relevant algorithms. 
+
 The demo package contains demonstrations of the algorithms. The env package contains gym environments used in demonstrations.
+
 
 ## Algorithms
 
